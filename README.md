@@ -1,9 +1,13 @@
 # BETA
+
 ## smart-contract-generator
+This repository is destinated to engineers who are going to develop the Smart Contract Generator feature for Zero-Code.io. The following description is more of a technical brief than a "how to use" description. We invite you to refer to this file as a reminder of what's needed to be done. 
+
+## Why are we building this feature?
 We want to help our users to set their Smart Contract &amp; to deploy their NFTs on public marketplaces
 
 ## Feature description
-Users should be able to set their Smart Contract by going through the following steps :
+### Users should be able to set their Smart Contract by going through the following steps 
 - Select the Blockchain (Ethereum or Polygon)
 - Select the name of the collection
 - Select the symbol of the collection
@@ -15,7 +19,7 @@ Users should be able to set their Smart Contract by going through the following 
 - Connect IPFS Address to the Smart Contract
 - Deploy the NFT to the Blockchain using Regular Mint (user pays a gas fee) or Lazy Mint (The first purchaser pays a gas fee)
 
-After deploying NFT on the blockchain, users should be able to do some advanced settings :
+### After deploying NFT on the blockchain, users should be able to do some advanced settings 
 - Select start and end date & time of Pre-sales. This feature will allow users to schedule their (limited) minting period for whitelisted wallets. 
 - Upload whitelist to gate mint during the pre-sale. Whitelisted wallets will be able to mint their NFTs before the opening of public sales.
 - Open or close Public sales. The open Public sales button could be manually activated on the minting day and would allow the community to start minting their NFTs. The close of Public sales button is usually used to manually end sales at the end of a time-limited drop. 
@@ -24,7 +28,7 @@ Select airdrop addresses to send them free NFTs. That’s usually used to incent
 - Update metadata (usually users would upload the IPFS address since this address gets updated when either the metadata or the artwork are changed) 
 - Update max per mint (that should allow users to fix the maximum number of purchasable NFTs per wallet so they prevent Whales from buying all NFTs at once)
 
-Users should also be able to create a minting button :
+### Users should also be able to create a minting button 
 - Copy a generated Iframe code they can embed on their website
 - Preview the mint button
 
@@ -48,3 +52,13 @@ Users should also be able to create a minting button :
 - Deploy NFT on Rarible & OpenSea
 - Create a Minting button
 - Mint from Desktop & Mobile
+
+
+## Sources that may help you have an in-depth understanding of what’s needed to be done
+[How to create a NFT minting website (No Code)](https://www.youtube.com/watch?v=9IzPDi_ygzw&t=589s) | The easiest way / best method
+Watch this Youtube video from min3:00 to min10:00. It explains the User flow we want to create.  
+
+
+Connect to this platform using Phantom wallet on Solana’s blockchain, click the [“General Mint Setting”](https://novalaunch.art/dashboard/mint-settings) tab in the left panel menu and follow the set steps to get a better understanding of the user flow we want to build. Then click on the 
+[“Solana Mint Account”](https://novalaunch.art/dashboard/mint-accounts) button in the left panel and do the same thing. 
+
