@@ -1,7 +1,7 @@
 # BETA
 
 ## smart-contract-generator
-This repository is destinated to engineers who are going to develop the Smart Contract Generator feature for Zero-Code.io. The following description is more of a technical brief than a "how to use" description. We invite you to refer to this file as a reminder of what's needed to be done. 
+This repository is destinated to engineers who are going to develop the Smart Contract Generator feature for [Zero-Code.io](https://zero-code.io). The following description is more of a technical brief than a "how to use" description. We invite you to refer to this file as a reminder of what's needed to be done. 
 
 ## Why are we building this feature?
 We want to help our users to set their Smart Contract &amp; to deploy their NFTs on public marketplaces
