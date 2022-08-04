@@ -60,7 +60,8 @@ Select airdrop addresses to send them free NFTs. That’s usually used to incent
 
 
 ## Sources that may help you have an in-depth understanding of what’s needed to be done
-[How to create a NFT minting website (No Code)](https://www.youtube.com/watch?v=9IzPDi_ygzw&t=589s) | The easiest way / best method
+- [Create an NFT minting button with ZeroCodeNFT](https://www.youtube.com/watch?v=_cIU62JmmJI)
+- [How to create a NFT minting website (No Code)](https://www.youtube.com/watch?v=9IzPDi_ygzw&t=589s) | The easiest way / best method
 Watch this Youtube video from min3:00 to min10:00. It explains the User flow we want to create.  
 
 
