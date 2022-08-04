@@ -8,16 +8,18 @@ We want to help our users to set their Smart Contract &amp; to deploy their NFTs
 
 ## Feature description
 ### Users should be able to set their Smart Contract by going through the following steps 
-- Select the Blockchain (Ethereum or Polygon)
-- Select the name of the collection
-- Select the symbol of the collection
-- Select the price per NFT minted (in ETH or MATIC)
-- Select the total number of NFTs to mint
-- Select the second market transaction royalties
-- Select the wallet of shareholders they’d like to share royalties with
-- Upload Artwork and Metadata on IPFS node
-- Connect IPFS Address to the Smart Contract
-- Deploy the NFT to the Blockchain using Regular Mint (user pays a gas fee) or Lazy Mint (The first purchaser pays a gas fee)
+- Register to account (name, email, referral code, phone number)
+- Create Contract (or select one that’s already created)
+- Pickup Smart-Contract type (ERC721, ERC1155, ERC20, ERC721 Azuki)
+- Select your Blockchain (ETH, Polygon, BNB, Tezos, Solana, Flow)
+- General information (IPFS metadata URL or upload, name, mint price, max NFTs per transaction, collection size, token symbol, max NFT per person)
+- Features:
+    - Delay reveal: placeholder IPFS url to revealed metadata
+    - whitelist: whitelist price & max nft per whitelisted person
+- Primary sales revenue splits: shareholders wallet address & shares %
+- Marketplace (OpenSea, Rarible)
+    - (optional) collection names, project url, royalties, royatiles wallet address, description
+- Verify everything & deploy contract
 
 ### After deploying NFT on the blockchain, users should be able to do some advanced settings 
 - Select start and end date & time of Pre-sales. This feature will allow users to schedule their (limited) minting period for whitelisted wallets. 
@@ -29,8 +31,11 @@ Select airdrop addresses to send them free NFTs. That’s usually used to incent
 - Update max per mint (that should allow users to fix the maximum number of purchasable NFTs per wallet so they prevent Whales from buying all NFTs at once)
 
 ### Users should also be able to create a minting button 
-- Copy a generated Iframe code they can embed on their website
-- Preview the mint button
+- Select Collection (Created Smart Contract)
+- Select link Marketplace, past collection URL in the marketplace & click link
+- Select add minting button: input button name, select drop datetime, create
+- Display the time before minting
+- Copy iframe to embed in the website
 
 ## Functionality Requirements overview
 - Store artwork (image & metadata) on IPFS
