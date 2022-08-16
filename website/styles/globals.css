@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  width: 100vw;
+  min-width: 100vw;
+  max-width: 100vw;
+  position: relative;
+  overflow-x: hidden;
+  background-color: #1f1f1f;
+  padding: 0;
+  margin: 0;
+}
+
+@font-face {
+  font-family: "Edistys";
+  font-style: normal;
+  font-weight: normal;
+  src: local("EDISTYS"), url("../public/fonts/EDISTYS.TTF") format("truetype");
+}
+
+@font-face {
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: normal;
+  src: local("Raleway"), url("../public/fonts/Raleway-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Orbitron";
+  font-style: normal;
+  font-weight: normal;
+  src: local("Orbitron"), url("../public/fonts/Orbitron.ttf") format("truetype");
+}
+
+.font-edistys {
+  font-family: "Edistys";
+}
+
+.font-raleway {
+  font-family: "Raleway";
+}
+
+.font-orbitron {
+  font-family: "Orbitron";
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.text-hero {
+  font-family: "Edistys";
+  font-style: normal;
+  font-weight: 400;
+  text-align: center;
+  font-variant: small-caps;
+  background: linear-gradient(
+    269.91deg,
+    #865ef9 0%,
+    #4ba886 54.89%,
+    #26b8f7 102.79%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+@media only screen and (max-width: 768px) {
+  .text-hero {
+    font-size: 26px;
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  .text-hero {
+    font-size: 60px;
+  }
+}
+
+@media only screen and (min-width: 1024px) {
+  .text-hero {
+    font-size: 80px;
+  }
+}
+
+@media only screen and (min-width: 1490px) {
+  .text-hero {
+    font-size: 100px;
+  }
+}
+
+.neumorphic-shadows {
+  -webkit-box-shadow: 1px 1px 1px #0b0b0c, -1px -1px 1px #3a3a3a;
+  box-shadow: 1px 1px 1px #0b0b0c, -1px -1px 1px #3a3a3a;
+  transition: all 0.5s;
+}
+
+.neumorphic-shadows:hover {
+  -webkit-box-shadow: 3px 3px 4px #0b0b0c, -3px -3px 4px #3a3a3a;
+  box-shadow: 3px 3px 4px #0b0b0c, -3px -3px 4px #3a3a3a;
+}
+
+.neumorphic-shadows-active {
+  -webkit-box-shadow: 3px 3px 4px #0b0b0c, -3px -3px 4px #3a3a3a;
+  box-shadow: 3px 3px 4px #0b0b0c, -3px -3px 4px #3a3a3a;
+}
+
+.left-hero-light {
+  position: absolute;
+  left: 27%;
+  top: 0;
+  width: 72px;
+  height: 25px;
+  background: #4ba886;
+  border-radius: 100%;
+  mix-blend-mode: screen;
+  filter: blur(4px);
+}
+
+.center-hero-light {
+  width: 72px;
+  height: 25px;
+  background: #3fb7c8;
+  border-radius: 100%;
+  mix-blend-mode: screen;
+  filter: blur(4px);
+}
+
+.right-hero-light {
+  position: absolute;
+  right: 27%;
+  top: 0;
+  width: 72px;
+  height: 25px;
+  background: #865ef9;
+  border-radius: 100%;
+  mix-blend-mode: screen;
+  filter: blur(4px);
+}
+
+.left-hero-beam {
+  position: absolute;
+  width: 32.5%;
+  height: 100%;
+  left: 8.6%;
+  top: 0;
+  background: url("../public/images/beams/LeftBeam.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+.center-hero-beam {
+  position: absolute;
+  width: 35%;
+  height: 100%;
+  left: 33.5%;
+  top: 0;
+  background: url("../public/images/beams/CenterBeam.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+.right-hero-beam {
+  position: absolute;
+  width: 35%;
+  height: 100%;
+  left: 59.5%;
+  top: 0;
+  background: url("../public/images/beams/RightBeam.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
