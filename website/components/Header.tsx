@@ -46,13 +46,13 @@ const Header = ({}) => {
     <div className="w-full flex flex-row justify-end space-x-5 px-5 py-2 bg-black z-50">
       {active ? (
         <>
-          <div className="flex flex-grow justify-center items-center space-x-5 md:space-x-10">
+          {/* <div className="flex flex-grow justify-center items-center space-x-5 md:space-x-10">
             <Link href="/">
               <p className="text-lg text-center text-white font-semibold font-raleway border-b border-transparent hover:border-white cursor-pointer transition duration-500">
                 Home
               </p>
             </Link>
-          </div>
+          </div> */}
           <div className="hidden flex-row space-x-2 justify-center items-center md:flex">
             <img className="w-5 h-5 object-fill" src={wallet?.icon} />
             <p

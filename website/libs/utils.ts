@@ -43,40 +43,6 @@ export const getRandomInt = (min: number, max: number) => {
   return Math.floor(Math.random() * max) + min;
 };
 
-export const addActivityFeed = async (
-  topic: string,
-  title: string,
-  description: string,
-  url: string,
-  images: Array<any>,
-  contractAddress: string,
-  walletAddress: string
-) => {
-  const response = await fetch("/api/addactivity", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      topic,
-      title,
-      description,
-      url,
-      images,
-      contractAddress,
-      walletAddress,
-    }),
-  });
-
-  if (response.ok) {
-    toast.success("Your activity is successfully posted.");
-  } else {
-    if (response.status == 400) {
-      const data = await response.json();
-      const error = data?.error;
-      toast.error(error);
-    } else {
-      toast.error("Error occured on submitting post in server side.");
-    }
-  }
+export const delay = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 };
