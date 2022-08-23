@@ -13,7 +13,6 @@ import {
 import useCatchTxError from "@/hooks/useCatchTxError";
 import ButtonClose from "./ButtonClose";
 import { toast } from "react-toastify";
-import { addActivityFeed, getRandomInt } from "@/libs/utils";
 
 const Mint721A = () => {
   const { account, active, library, chainId } = useWeb3React<Web3Provider>();
@@ -52,23 +51,6 @@ const Mint721A = () => {
       if (tx) {
         setTxLink(tx.transactionHash);
         setIsMintSucceed(true);
-
-        addActivityFeed(
-          `${quantity} ERC721A NFT(s) Minted`,
-          "NFT Minted",
-          `${new Date().toUTCString()} ${quantity} ERC721A NFT(s) Minted`,
-          `${ETHERSCAN_LINKS[chainId ? chainId : 1]}/tx/${tx.transactionHash}`,
-          [
-            {
-              image: `https://opensea.mypinata.cloud/ipfs/QmP6rhNHYvam4yGAs2ZwswEwxRLRLzKAj7f8EbJX9niMw7/${getRandomInt(
-                1,
-                1000
-              )}`,
-            },
-          ],
-          ERC721A_CONTRACT_ADDRESS,
-          account
-        );
       }
     } catch (e: any) {
       console.log(e);
