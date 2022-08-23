@@ -13,7 +13,6 @@ import {
 import useCatchTxError from "@/hooks/useCatchTxError";
 import ButtonClose from "./ButtonClose";
 import { toast } from "react-toastify";
-import { addActivityFeed, getRandomInt } from "@/libs/utils";
 
 const Mint1155 = () => {
   const { account, active, library, chainId } = useWeb3React<Web3Provider>();
@@ -38,24 +37,6 @@ const Mint1155 = () => {
         return;
       }
 
-      // For testing
-      // addActivityFeed(
-      //   `ERC1155 NFT Minted`,
-      //   "NFT Minted",
-      //   `${new Date().toUTCString()} ERC1155 NFT(s) Minted`,
-      //   `${ETHERSCAN_LINKS[chainId ? chainId : 1]}/tx/${txLink}`,
-      //   [
-      //     {
-      //       image: `https://opensea.mypinata.cloud/ipfs/QmP6rhNHYvam4yGAs2ZwswEwxRLRLzKAj7f8EbJX9niMw7/${getRandomInt(
-      //         1,
-      //         1000
-      //       )}`,
-      //     },
-      //   ],
-      //   ERC1155_CONTRACT_ADDRESS,
-      //   account
-      // );
-
       const erc1155 = new Contract(
         ERC1155_CONTRACT_ADDRESS,
         ERC1155_CONTRACT_ABI,
@@ -69,23 +50,6 @@ const Mint1155 = () => {
       if (tx) {
         setTxLink(tx.transactionHash);
         setIsMintSucceed(true);
-
-        addActivityFeed(
-          `ERC1155 NFT Minted`,
-          "NFT Minted",
-          `${new Date().toUTCString()} ERC1155 NFT(s) Minted`,
-          `${ETHERSCAN_LINKS[chainId ? chainId : 1]}/tx/${tx.transactionHash}`,
-          [
-            {
-              image: `https://opensea.mypinata.cloud/ipfs/QmP6rhNHYvam4yGAs2ZwswEwxRLRLzKAj7f8EbJX9niMw7/${getRandomInt(
-                1,
-                1000
-              )}`,
-            },
-          ],
-          ERC1155_CONTRACT_ADDRESS,
-          account
-        );
       }
     } catch (e: any) {
       console.log(e);
