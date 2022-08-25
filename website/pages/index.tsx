@@ -14,7 +14,7 @@ import {
 import { useEffect, useState } from "react";
 import { useWeb3React } from "@web3-react/core";
 import { toast } from "react-toastify";
-import { NFTPORT_API_KEY } from "@/libs/constants";
+import { IFRAME_BASE_URL, NFTPORT_API_KEY } from "@/libs/constants";
 import Web3 from "web3";
 import { delay } from "@/libs/utils";
 
@@ -31,9 +31,25 @@ const Home: NextPage = () => {
   const [royaltiesAddress, setRoyaltiesAddress] = useState<string>("");
   const [txLink, setTxLink] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string>("");
+  const [iframContent, setIframeContent] = useState<string>("");
   const [isWorking, setIsWorking] = useState<boolean>(false);
 
-  const deploy = async () => {
+  const copyClipboard = (e: any = null) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (window && navigator) {
+      navigator.clipboard.writeText(iframContent);
+      toast.success("Copied to clipboard!");
+    }
+  };
+
+  const deploy = async (e: any = null) => {
+    if (e) {
+      e.preventDefault();
+    }
+
     if (chain != "rinkeby") {
       toast.info("Only support Rinkeby for now.");
       return;
@@ -87,6 +103,7 @@ const Home: NextPage = () => {
 
     setIsWorking(true);
     setContractAddress("");
+    setIframeContent("");
 
     try {
       const response = await fetch("https://api.nftport.xyz/v0/contracts", {
@@ -119,6 +136,9 @@ const Home: NextPage = () => {
         if (detailResponse.ok) {
           const detailData = await detailResponse.json();
           setContractAddress(detailData.contract_address);
+          setIframeContent(
+            `<iframe width="100%" height="550px" allowfullscreen="true" style="border:none;" loading="lazy" title="ZeroCodes" src="${IFRAME_BASE_URL}/iframe/${detailData.contract_address}"></iframe>`
+          );
 
           toast.success(
             <div>
@@ -294,6 +314,12 @@ const Home: NextPage = () => {
               <h1 className="text-center text-xl text-blue-500 my-10">
                 Contract Address: <b>{contractAddress}</b>
               </h1>
+              <div
+                className="w-full h-20 cursor-pointer select-none p-5 border border-gray-500 rounded-md hover:bg-gray-100"
+                onClick={copyClipboard}
+              >
+                {iframContent}
+              </div>
             </>
           )}
         </div>

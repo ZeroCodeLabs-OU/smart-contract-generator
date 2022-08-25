@@ -20,6 +20,8 @@ export const WALLETS = [
   },
 ];
 
+export const IFRAME_BASE_URL = process.env.NEXT_PUBLIC_IFRAME_BASE_URL!;
+
 export const NFTPORT_API_KEY = process.env.NEXT_PUBLIC_NFTPORT_API_KEY!;
 
 export const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID);
