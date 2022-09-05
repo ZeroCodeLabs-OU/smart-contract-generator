@@ -20,21 +20,9 @@ export const WALLETS = [
   },
 ];
 
+export const IFRAME_BASE_URL = process.env.NEXT_PUBLIC_IFRAME_BASE_URL!;
+
 export const NFTPORT_API_KEY = process.env.NEXT_PUBLIC_NFTPORT_API_KEY!;
-
-export const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID);
-
-export const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
-export const ALCHEMY_API_ETH_PROVIDER_URL =
-  process.env.NEXT_PUBLIC_ALCHEMY_API_ETH_PROVIDER_URL;
-
-export const ETHERSCAN_LINKS = [
-  "",
-  "https://etherscan.io/",
-  "",
-  "https://ropsten.etherscan.io/",
-  "https://rinkeby.etherscan.io/",
-];
 
 export const NETWORK_TYPES = [
   "",
@@ -44,318 +32,82 @@ export const NETWORK_TYPES = [
   "Rinkeby Test Network",
 ];
 
-export const GETSTREAM_APP_ID = process.env.NEXT_PUBLIC_GETSTREAM_APP_ID!;
-export const GETSTREAM_API_KEY = process.env.NEXT_PUBLIC_GETSTREAM_API_KEY!;
-export const GETSTREAM_API_SECRECT_KEY =
-  process.env.NEXT_PUBLIC_GETSTREAM_API_SECRECT_KEY!;
-export const GETSTREAM_OWNER_ID = process.env.NEXT_PUBLIC_GETSTREAM_OWNER_ID!;
-
-export const ERC1155_CONTRACT_ADDRESS =
-  "0x7Aaf239882a2C81EB5CbFAf878Bb45859a633B40";
-export const ERC721A_CONTRACT_ADDRESS =
-  "0xe9B3dd6d5791D9aF0351E7F1b7934f838Ee4b6f6";
-
-export const ERC1155_CONTRACT_ABI = [
+export const CONTRACT_ABI = [
   {
-    inputs: [
-      { internalType: "uint256", name: "_maxSupply", type: "uint256" },
-      { internalType: "string", name: "_baseURI", type: "string" },
-    ],
-    stateMutability: "nonpayable",
-    type: "constructor",
-  },
-  {
-    anonymous: false,
     inputs: [
       {
-        indexed: true,
-        internalType: "address",
-        name: "account",
-        type: "address",
+        components: [
+          { internalType: "string", name: "name", type: "string" },
+          { internalType: "string", name: "symbol", type: "string" },
+          { internalType: "address", name: "owner", type: "address" },
+          { internalType: "uint256", name: "maxSupply", type: "uint256" },
+          { internalType: "uint256", name: "reservedSupply", type: "uint256" },
+          { internalType: "uint256", name: "tokensPerMint", type: "uint256" },
+          {
+            internalType: "address payable",
+            name: "treasuryAddress",
+            type: "address",
+          },
+        ],
+        internalType: "struct NFTCollection.DeploymentConfig",
+        name: "deploymentConfig",
+        type: "tuple",
       },
       {
-        indexed: true,
-        internalType: "address",
-        name: "operator",
-        type: "address",
+        components: [
+          { internalType: "string", name: "baseURI", type: "string" },
+          { internalType: "bool", name: "metadataUpdatable", type: "bool" },
+          { internalType: "uint256", name: "publicMintPrice", type: "uint256" },
+          { internalType: "bool", name: "publicMintPriceFrozen", type: "bool" },
+          {
+            internalType: "uint256",
+            name: "presaleMintPrice",
+            type: "uint256",
+          },
+          {
+            internalType: "bool",
+            name: "presaleMintPriceFrozen",
+            type: "bool",
+          },
+          { internalType: "uint256", name: "publicMintStart", type: "uint256" },
+          {
+            internalType: "uint256",
+            name: "presaleMintStart",
+            type: "uint256",
+          },
+          { internalType: "string", name: "prerevealTokenURI", type: "string" },
+          {
+            internalType: "bytes32",
+            name: "presaleMerkleRoot",
+            type: "bytes32",
+          },
+          { internalType: "uint256", name: "royaltiesBps", type: "uint256" },
+          {
+            internalType: "address",
+            name: "royaltiesAddress",
+            type: "address",
+          },
+        ],
+        internalType: "struct NFTCollection.RuntimeConfig",
+        name: "runtimeConfig",
+        type: "tuple",
       },
-      { indexed: false, internalType: "bool", name: "approved", type: "bool" },
-    ],
-    name: "ApprovalForAll",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "previousOwner",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "newOwner",
-        type: "address",
-      },
-    ],
-    name: "OwnershipTransferred",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "operator",
-        type: "address",
-      },
-      { indexed: true, internalType: "address", name: "from", type: "address" },
-      { indexed: true, internalType: "address", name: "to", type: "address" },
-      {
-        indexed: false,
-        internalType: "uint256[]",
-        name: "ids",
-        type: "uint256[]",
-      },
-      {
-        indexed: false,
-        internalType: "uint256[]",
-        name: "values",
-        type: "uint256[]",
-      },
-    ],
-    name: "TransferBatch",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "operator",
-        type: "address",
-      },
-      { indexed: true, internalType: "address", name: "from", type: "address" },
-      { indexed: true, internalType: "address", name: "to", type: "address" },
-      { indexed: false, internalType: "uint256", name: "id", type: "uint256" },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "value",
-        type: "uint256",
-      },
-    ],
-    name: "TransferSingle",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: false, internalType: "string", name: "value", type: "string" },
-      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
-    ],
-    name: "URI",
-    type: "event",
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "account", type: "address" },
-      { internalType: "uint256", name: "id", type: "uint256" },
-    ],
-    name: "balanceOf",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "address[]", name: "accounts", type: "address[]" },
-      { internalType: "uint256[]", name: "ids", type: "uint256[]" },
-    ],
-    name: "balanceOfBatch",
-    outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "baseURI",
-    outputs: [{ internalType: "string", name: "", type: "string" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address", name: "_addr", type: "address" }],
-    name: "checkInWhitelist",
-    outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "account", type: "address" },
-      { internalType: "address", name: "operator", type: "address" },
-    ],
-    name: "isApprovedForAll",
-    outputs: [{ internalType: "bool", name: "", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "isPresale",
-    outputs: [
-      {
-        internalType: "enum AsyncPlayground.SALE_TYPE",
-        name: "",
-        type: "uint8",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "mint",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "owner",
-    outputs: [{ internalType: "address", name: "", type: "address" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "renounceOwnership",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "from", type: "address" },
-      { internalType: "address", name: "to", type: "address" },
-      { internalType: "uint256[]", name: "ids", type: "uint256[]" },
-      { internalType: "uint256[]", name: "amounts", type: "uint256[]" },
-      { internalType: "bytes", name: "data", type: "bytes" },
-    ],
-    name: "safeBatchTransferFrom",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "from", type: "address" },
-      { internalType: "address", name: "to", type: "address" },
-      { internalType: "uint256", name: "id", type: "uint256" },
-      { internalType: "uint256", name: "amount", type: "uint256" },
-      { internalType: "bytes", name: "data", type: "bytes" },
-    ],
-    name: "safeTransferFrom",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "operator", type: "address" },
-      { internalType: "bool", name: "approved", type: "bool" },
-    ],
-    name: "setApprovalForAll",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "string", name: "_newBaseURI", type: "string" }],
-    name: "setBaseUri",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "setPreSale",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "setPublicSale",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address[]", name: "list", type: "address[]" }],
-    name: "setWhitelist",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "bytes4", name: "interfaceId", type: "bytes4" }],
-    name: "supportsInterface",
-    outputs: [{ internalType: "bool", name: "", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "totalSupply",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address", name: "newOwner", type: "address" }],
-    name: "transferOwnership",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "uint256", name: "_tokenId", type: "uint256" }],
-    name: "uri",
-    outputs: [{ internalType: "string", name: "", type: "string" }],
-    stateMutability: "view",
-    type: "function",
-  },
-];
-
-export const ERC721A_CONTRACT_ABI = [
-  {
-    inputs: [
-      { internalType: "uint256", name: "_pMaxSupply", type: "uint256" },
-      { internalType: "string", name: "_pBaseURI", type: "string" },
     ],
     stateMutability: "nonpayable",
     type: "constructor",
   },
   { inputs: [], name: "ApprovalCallerNotOwnerNorApproved", type: "error" },
   { inputs: [], name: "ApprovalQueryForNonexistentToken", type: "error" },
+  { inputs: [], name: "ApprovalToCurrentOwner", type: "error" },
   { inputs: [], name: "ApproveToCaller", type: "error" },
   { inputs: [], name: "BalanceQueryForZeroAddress", type: "error" },
-  { inputs: [], name: "MintERC2309QuantityExceedsLimit", type: "error" },
   { inputs: [], name: "MintToZeroAddress", type: "error" },
   { inputs: [], name: "MintZeroQuantity", type: "error" },
   { inputs: [], name: "OwnerQueryForNonexistentToken", type: "error" },
-  { inputs: [], name: "OwnershipNotInitializedForExtraData", type: "error" },
   { inputs: [], name: "TransferCallerNotOwnerNorApproved", type: "error" },
   { inputs: [], name: "TransferFromIncorrectOwner", type: "error" },
   { inputs: [], name: "TransferToNonERC721ReceiverImplementer", type: "error" },
   { inputs: [], name: "TransferToZeroAddress", type: "error" },
-  { inputs: [], name: "URIQueryForNonexistentToken", type: "error" },
   {
     anonymous: false,
     inputs: [
@@ -404,22 +156,9 @@ export const ERC721A_CONTRACT_ABI = [
   {
     anonymous: false,
     inputs: [
-      {
-        indexed: true,
-        internalType: "uint256",
-        name: "fromTokenId",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "toTokenId",
-        type: "uint256",
-      },
-      { indexed: true, internalType: "address", name: "from", type: "address" },
-      { indexed: true, internalType: "address", name: "to", type: "address" },
+      { indexed: false, internalType: "uint8", name: "version", type: "uint8" },
     ],
-    name: "ConsecutiveTransfer",
+    name: "Initialized",
     type: "event",
   },
   {
@@ -444,6 +183,66 @@ export const ERC721A_CONTRACT_ABI = [
   {
     anonymous: false,
     inputs: [
+      { indexed: true, internalType: "bytes32", name: "role", type: "bytes32" },
+      {
+        indexed: true,
+        internalType: "bytes32",
+        name: "previousAdminRole",
+        type: "bytes32",
+      },
+      {
+        indexed: true,
+        internalType: "bytes32",
+        name: "newAdminRole",
+        type: "bytes32",
+      },
+    ],
+    name: "RoleAdminChanged",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "bytes32", name: "role", type: "bytes32" },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "sender",
+        type: "address",
+      },
+    ],
+    name: "RoleGranted",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "bytes32", name: "role", type: "bytes32" },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "sender",
+        type: "address",
+      },
+    ],
+    name: "RoleRevoked",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
       { indexed: true, internalType: "address", name: "from", type: "address" },
       { indexed: true, internalType: "address", name: "to", type: "address" },
       {
@@ -457,6 +256,34 @@ export const ERC721A_CONTRACT_ABI = [
     type: "event",
   },
   {
+    inputs: [],
+    name: "ADMIN_ROLE",
+    outputs: [{ internalType: "bytes32", name: "", type: "bytes32" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "DEFAULT_ADMIN_ROLE",
+    outputs: [{ internalType: "bytes32", name: "", type: "bytes32" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "ROYALTIES_BASIS",
+    outputs: [{ internalType: "uint16", name: "", type: "uint16" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "VERSION",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       { internalType: "address", name: "to", type: "address" },
       { internalType: "uint256", name: "tokenId", type: "uint256" },
@@ -467,6 +294,13 @@ export const ERC721A_CONTRACT_ABI = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "availableSupply",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [{ internalType: "address", name: "owner", type: "address" }],
     name: "balanceOf",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
@@ -474,16 +308,16 @@ export const ERC721A_CONTRACT_ABI = [
     type: "function",
   },
   {
-    inputs: [{ internalType: "address", name: "_addr", type: "address" }],
-    name: "checkInWhitelist",
-    outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
+    inputs: [],
+    name: "baseURI",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [],
-    name: "currentHoldCount",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "contractURI",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
     stateMutability: "view",
     type: "function",
   },
@@ -492,6 +326,199 @@ export const ERC721A_CONTRACT_ABI = [
     name: "getApproved",
     outputs: [{ internalType: "address", name: "", type: "address" }],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getInfo",
+    outputs: [
+      {
+        components: [
+          { internalType: "uint256", name: "version", type: "uint256" },
+          {
+            components: [
+              { internalType: "string", name: "name", type: "string" },
+              { internalType: "string", name: "symbol", type: "string" },
+              { internalType: "address", name: "owner", type: "address" },
+              { internalType: "uint256", name: "maxSupply", type: "uint256" },
+              {
+                internalType: "uint256",
+                name: "reservedSupply",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "tokensPerMint",
+                type: "uint256",
+              },
+              {
+                internalType: "address payable",
+                name: "treasuryAddress",
+                type: "address",
+              },
+            ],
+            internalType: "struct NFTCollection.DeploymentConfig",
+            name: "deploymentConfig",
+            type: "tuple",
+          },
+          {
+            components: [
+              { internalType: "string", name: "baseURI", type: "string" },
+              { internalType: "bool", name: "metadataUpdatable", type: "bool" },
+              {
+                internalType: "uint256",
+                name: "publicMintPrice",
+                type: "uint256",
+              },
+              {
+                internalType: "bool",
+                name: "publicMintPriceFrozen",
+                type: "bool",
+              },
+              {
+                internalType: "uint256",
+                name: "presaleMintPrice",
+                type: "uint256",
+              },
+              {
+                internalType: "bool",
+                name: "presaleMintPriceFrozen",
+                type: "bool",
+              },
+              {
+                internalType: "uint256",
+                name: "publicMintStart",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "presaleMintStart",
+                type: "uint256",
+              },
+              {
+                internalType: "string",
+                name: "prerevealTokenURI",
+                type: "string",
+              },
+              {
+                internalType: "bytes32",
+                name: "presaleMerkleRoot",
+                type: "bytes32",
+              },
+              {
+                internalType: "uint256",
+                name: "royaltiesBps",
+                type: "uint256",
+              },
+              {
+                internalType: "address",
+                name: "royaltiesAddress",
+                type: "address",
+              },
+            ],
+            internalType: "struct NFTCollection.RuntimeConfig",
+            name: "runtimeConfig",
+            type: "tuple",
+          },
+        ],
+        internalType: "struct NFTCollection.ContractInfo",
+        name: "info",
+        type: "tuple",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "bytes32", name: "role", type: "bytes32" }],
+    name: "getRoleAdmin",
+    outputs: [{ internalType: "bytes32", name: "", type: "bytes32" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "bytes32", name: "role", type: "bytes32" },
+      { internalType: "address", name: "account", type: "address" },
+    ],
+    name: "grantRole",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "bytes32", name: "role", type: "bytes32" },
+      { internalType: "address", name: "account", type: "address" },
+    ],
+    name: "hasRole",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        components: [
+          { internalType: "string", name: "name", type: "string" },
+          { internalType: "string", name: "symbol", type: "string" },
+          { internalType: "address", name: "owner", type: "address" },
+          { internalType: "uint256", name: "maxSupply", type: "uint256" },
+          { internalType: "uint256", name: "reservedSupply", type: "uint256" },
+          { internalType: "uint256", name: "tokensPerMint", type: "uint256" },
+          {
+            internalType: "address payable",
+            name: "treasuryAddress",
+            type: "address",
+          },
+        ],
+        internalType: "struct NFTCollection.DeploymentConfig",
+        name: "deploymentConfig",
+        type: "tuple",
+      },
+      {
+        components: [
+          { internalType: "string", name: "baseURI", type: "string" },
+          { internalType: "bool", name: "metadataUpdatable", type: "bool" },
+          { internalType: "uint256", name: "publicMintPrice", type: "uint256" },
+          { internalType: "bool", name: "publicMintPriceFrozen", type: "bool" },
+          {
+            internalType: "uint256",
+            name: "presaleMintPrice",
+            type: "uint256",
+          },
+          {
+            internalType: "bool",
+            name: "presaleMintPriceFrozen",
+            type: "bool",
+          },
+          { internalType: "uint256", name: "publicMintStart", type: "uint256" },
+          {
+            internalType: "uint256",
+            name: "presaleMintStart",
+            type: "uint256",
+          },
+          { internalType: "string", name: "prerevealTokenURI", type: "string" },
+          {
+            internalType: "bytes32",
+            name: "presaleMerkleRoot",
+            type: "bytes32",
+          },
+          { internalType: "uint256", name: "royaltiesBps", type: "uint256" },
+          {
+            internalType: "address",
+            name: "royaltiesAddress",
+            type: "address",
+          },
+        ],
+        internalType: "struct NFTCollection.RuntimeConfig",
+        name: "runtimeConfig",
+        type: "tuple",
+      },
+    ],
+    name: "initialize",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -505,23 +532,41 @@ export const ERC721A_CONTRACT_ABI = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "isPresale",
-    outputs: [
-      {
-        internalType: "enum AsyncPlayground.SALE_TYPE",
-        name: "",
-        type: "uint8",
-      },
+    inputs: [
+      { internalType: "address", name: "wallet", type: "address" },
+      { internalType: "bytes32[]", name: "proof", type: "bytes32[]" },
     ],
+    name: "isWhitelisted",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
     stateMutability: "view",
     type: "function",
   },
   {
-    inputs: [{ internalType: "uint256", name: "quantity", type: "uint256" }],
+    inputs: [],
+    name: "maxSupply",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "metadataUpdatable",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "amount", type: "uint256" }],
     name: "mint",
     outputs: [],
     stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "mintingActive",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -547,9 +592,118 @@ export const ERC721A_CONTRACT_ABI = [
   },
   {
     inputs: [],
-    name: "renounceOwnership",
+    name: "prerevealTokenURI",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "presaleActive",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "presaleMerkleRoot",
+    outputs: [{ internalType: "bytes32", name: "", type: "bytes32" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "amount", type: "uint256" },
+      { internalType: "bytes32[]", name: "proof", type: "bytes32[]" },
+    ],
+    name: "presaleMint",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "presaleMintPrice",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "presaleMintStart",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "publicMintPrice",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "publicMintStart",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "bytes32", name: "role", type: "bytes32" },
+      { internalType: "address", name: "account", type: "address" },
+    ],
+    name: "renounceRole",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "to", type: "address" },
+      { internalType: "uint256", name: "amount", type: "uint256" },
+    ],
+    name: "reserveMint",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "reserveRemaining",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "reservedSupply",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "bytes32", name: "role", type: "bytes32" },
+      { internalType: "address", name: "account", type: "address" },
+    ],
+    name: "revokeRole",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "", type: "uint256" },
+      { internalType: "uint256", name: "salePrice", type: "uint256" },
+    ],
+    name: "royaltyInfo",
+    outputs: [
+      { internalType: "address", name: "receiver", type: "address" },
+      { internalType: "uint256", name: "royaltyAmount", type: "uint256" },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -586,34 +740,6 @@ export const ERC721A_CONTRACT_ABI = [
     type: "function",
   },
   {
-    inputs: [{ internalType: "string", name: "_newBaseURI", type: "string" }],
-    name: "setBaseURI",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "setPreSale",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "setPublicSale",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address[]", name: "list", type: "address[]" }],
-    name: "setWhitelist",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
     inputs: [{ internalType: "bytes4", name: "interfaceId", type: "bytes4" }],
     name: "supportsInterface",
     outputs: [{ internalType: "bool", name: "", type: "bool" }],
@@ -636,9 +762,23 @@ export const ERC721A_CONTRACT_ABI = [
   },
   {
     inputs: [],
+    name: "tokensPerMint",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "totalSupply",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "to", type: "address" }],
+    name: "transferAdminRights",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -655,6 +795,67 @@ export const ERC721A_CONTRACT_ABI = [
   {
     inputs: [{ internalType: "address", name: "newOwner", type: "address" }],
     name: "transferOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "treasuryAddress",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        components: [
+          { internalType: "string", name: "baseURI", type: "string" },
+          { internalType: "bool", name: "metadataUpdatable", type: "bool" },
+          { internalType: "uint256", name: "publicMintPrice", type: "uint256" },
+          { internalType: "bool", name: "publicMintPriceFrozen", type: "bool" },
+          {
+            internalType: "uint256",
+            name: "presaleMintPrice",
+            type: "uint256",
+          },
+          {
+            internalType: "bool",
+            name: "presaleMintPriceFrozen",
+            type: "bool",
+          },
+          { internalType: "uint256", name: "publicMintStart", type: "uint256" },
+          {
+            internalType: "uint256",
+            name: "presaleMintStart",
+            type: "uint256",
+          },
+          { internalType: "string", name: "prerevealTokenURI", type: "string" },
+          {
+            internalType: "bytes32",
+            name: "presaleMerkleRoot",
+            type: "bytes32",
+          },
+          { internalType: "uint256", name: "royaltiesBps", type: "uint256" },
+          {
+            internalType: "address",
+            name: "royaltiesAddress",
+            type: "address",
+          },
+        ],
+        internalType: "struct NFTCollection.RuntimeConfig",
+        name: "newConfig",
+        type: "tuple",
+      },
+    ],
+    name: "updateConfig",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "withdrawFees",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

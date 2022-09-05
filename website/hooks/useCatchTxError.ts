@@ -14,21 +14,17 @@ export type CatchTxErrorReturn = {
     fn: () => Promise<TxResponse>
   ) => Promise<TransactionReceipt | null>;
   loading: boolean;
-};
-
-type ErrorData = {
-  code: number;
-  message: string;
-};
-
-type TxError = {
-  data: ErrorData;
-  error: string;
+  succeeded: boolean;
+  interacting: boolean;
+  errorMessage: string;
 };
 
 export default function useCatchTxError(): CatchTxErrorReturn {
   const { library } = useWeb3React();
   const [loading, setLoading] = useState(false);
+  const [interacting, setInteracting] = useState(false);
+  const [succeeded, setSucceeded] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleNormalError = useCallback(
     (error: any, tx?: TxResponse) => {
@@ -46,6 +42,7 @@ export default function useCatchTxError(): CatchTxErrorReturn {
       } else {
         toast.error(errMsg);
       }
+      setErrorMessage(errMsg);
     },
     [toast]
   );
@@ -58,10 +55,18 @@ export default function useCatchTxError(): CatchTxErrorReturn {
 
       try {
         setLoading(true);
+        setSucceeded(false);
+        setInteracting(true);
 
         tx = await callTx();
+
+        setInteracting(false);
+
         // @ts-ignore
         const receipt = await tx.wait();
+
+        setSucceeded(true);
+
         return receipt;
       } catch (error: any) {
         if (!isUserRejected(error)) {
@@ -105,14 +110,21 @@ export default function useCatchTxError(): CatchTxErrorReturn {
                       ? `Transaction failed with error: ${reason}`
                       : "Transaction failed. For detailed error message:"
                   );
+                  setErrorMessage(
+                    isRevertedError
+                      ? `Transaction failed with error: ${reason}`
+                      : "Transaction failed. For detailed error message:"
+                  );
                 }
               });
           }
         } else {
           toast.error("Rejected");
+          setErrorMessage("Rejected");
         }
       } finally {
         setLoading(false);
+        setInteracting(false);
       }
 
       return null;
@@ -123,5 +135,8 @@ export default function useCatchTxError(): CatchTxErrorReturn {
   return {
     fetchWithCatchTxError,
     loading,
+    succeeded,
+    interacting,
+    errorMessage,
   };
 }
