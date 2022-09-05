@@ -229,6 +229,8 @@ const Home: NextPage = () => {
             `<iframe width="100%" height="550px" allowfullscreen="true" style="border:none;" loading="lazy" title="ZeroCodes" src="${IFRAME_BASE_URL}/iframe/${data.contract_address}"></iframe>`
           );
 
+          deployBody.presale_whitelisted_addresses =
+            deployBody.presale_whitelisted_addresses.length;
           deployBody.contract_address = data.contract_address;
           deployBody.tokens_per_person = maxNftsPerWallet;
 

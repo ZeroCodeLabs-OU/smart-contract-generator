@@ -1,11 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { utils } from "ethers";
-import MerkleTree from "merkletreejs";
-import keccak256 from "keccak256";
-import { createReadStream } from "fs";
-import { createInterface } from "readline";
-import path from "path";
-import { db } from "@/libs/firebase";
+import { NFTPORT_API_KEY } from "@/libs/constants";
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,35 +12,32 @@ export default async function handler(
   try {
     const { contract_address, account } = req.body;
 
-    const dataDoc = await db
-      .collection("collection")
-      .doc(contract_address)
-      .get();
-
-    if (!dataDoc.exists) {
-      return res.json({ proof: null });
-    }
-
-    const addresses = dataDoc.data()?.presale_whitelisted_addresses;
-    const allowed = addresses.findIndex(
-      (item: any) => item.toLowerCase() == (<string>account).toLowerCase()
+    const response = await fetch(
+      "https://api.nftport.xyz/v0/me/contracts/collections?chain=rinkeby&include=merkle_proofs",
+      {
+        method: "GET",
+        headers: {
+          Authorization: NFTPORT_API_KEY,
+          "Content-Type": "application/json",
+        },
+      }
     );
-
-    if (allowed < 0) {
-      return res.json({ proof: null });
+    if (response.ok) {
+      const contractAddress = <string>contract_address;
+      const data = await response.json();
+      const contracts = data.contracts;
+      const contractInfo = contracts.find(
+        (contract: any) => contract.address == contractAddress.toLowerCase()
+      );
+      if (contractInfo) {
+        const proof = contractInfo.merkle_proofs[account];
+        return res.json({ proof });
+      } else {
+        res.status(400).json({ proof: null });
+      }
+    } else {
+      res.status(400).json({ proof: null });
     }
-
-    const elements = addresses.map((item: any) =>
-      utils.solidityKeccak256(["address"], [item])
-    );
-    const merkleTree = new MerkleTree(elements, keccak256, { sort: true });
-    const root = merkleTree.getHexRoot();
-    const proof = merkleTree.getHexProof(elements[allowed]);
-
-    console.log("Merkle Root", root);
-    console.log("Merkle Proof", proof);
-
-    res.json({ proof });
   } catch (err) {
     res.status(400).json({ error: (err as Error).message });
   }
