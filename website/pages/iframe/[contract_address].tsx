@@ -171,7 +171,7 @@ const Home: NextPage = () => {
           }}
         />
         <button
-          className="w-20 p-3 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded mb-10"
+          className="w-20 p-3 bg-pink-500 hover:bg-pink-700 text-white font-bold mb-10"
           onClick={mint}
           disabled={isWorking || loading}
         >
@@ -180,8 +180,8 @@ const Home: NextPage = () => {
       </div>
 
       {(isWorking || loading) && (
-        <div className="fixed left-0 top-0 w-screen h-screen bg-black bg-opacity-30 flex flex-row justify-center items-center z-50">
-          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-blue-500"></div>
+        <div className="fixed left-0 top-0 w-screen h-screen bg-orange-400 bg-opacity-30 flex flex-row justify-center items-center z-50">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-pink-500"></div>
         </div>
       )}
     </Layout>
