@@ -8,19 +8,31 @@ const useWalletConnection = () => {
   const connectWallet = (wallet: any, callBack: any) => {
     if (!window) return;
 
-    window.localStorage.clear();
-    window.localStorage.setItem(TAG_PROVIDER, wallet.title);
+    try {
+      window.localStorage.clear();
+      window.localStorage.setItem(TAG_PROVIDER, wallet.title);
+    } catch (e) {
+      console.log(e);
+    }
+    
     if (callBack) {
       callBack();
     }
+    
     activate(wallet.connector);
   };
 
   const disconnectWallet = (callBack: any) => {
-    window.localStorage.clear();
+    try {
+      window.localStorage.clear();
+    } catch (e) {
+      console.log(e);
+    }
+
     if (callBack) {
       callBack();
     }
+
     deactivate();
   };
 

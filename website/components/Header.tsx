@@ -1,27 +1,25 @@
 import { useEffect, useState } from "react";
 import Modal from "@mui/material/Modal";
-import { useWeb3React } from "@web3-react/core";
 import { toast } from "react-toastify";
 import { NETWORK_TYPES, TAG_PROVIDER, WALLETS } from "@/libs/constants";
 import { truncateAddress } from "@/libs/utils";
-import Link from "next/link";
+import useWalletConnection from "@/hooks/useWalletConnection";
 
 const Header = ({}) => {
-  const { active, account, chainId, activate, deactivate } = useWeb3React();
+  const { active, account, chainId, connectWallet, disconnectWallet } =
+    useWalletConnection();
   const [isOpenConnectModal, setIsOpenConnectModal] = useState<boolean>(false);
   const [wallet, setWallet] = useState<any>(null);
 
   const connect = (wallet: any) => {
-    window.localStorage.clear();
-    window.localStorage.setItem(TAG_PROVIDER, wallet.title);
-    setIsOpenConnectModal(false);
-    setWallet(wallet);
-    activate(wallet.connector);
+    connectWallet(wallet, () => {
+      setWallet(wallet);
+      setIsOpenConnectModal(false);
+    });
   };
 
   const disconnect = () => {
-    window.localStorage.clear();
-    deactivate();
+    disconnectWallet(null);
   };
 
   const copyAddress = () => {
@@ -31,14 +29,18 @@ const Header = ({}) => {
   };
 
   useEffect(() => {
-    const provider = window.localStorage.getItem(TAG_PROVIDER);
-    if (provider) {
-      for (let wallet of WALLETS) {
-        if (provider == wallet.title) {
-          connect(wallet);
-          break;
+    try {
+      const provider = window.localStorage.getItem(TAG_PROVIDER);
+      if (provider) {
+        for (let wallet of WALLETS) {
+          if (provider == wallet.title) {
+            connect(wallet);
+            break;
+          }
         }
       }
+    } catch (e) {
+      console.log(e);
     }
   }, []);
 
