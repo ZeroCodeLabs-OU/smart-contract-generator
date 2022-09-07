@@ -45,7 +45,7 @@ const Header = ({}) => {
   }, []);
 
   return (
-    <div className="w-full flex flex-row justify-end space-x-5 px-5 py-2 bg-black z-50">
+    <div className="w-full flex flex-row justify-end space-x-5 px-5 py-2 bg-orange-400 z-50">
       {active ? (
         <>
           <div className="hidden flex-row space-x-2 justify-center items-center md:flex">
@@ -68,7 +68,7 @@ const Header = ({}) => {
           </div>
           <button
             onClick={disconnect}
-            className="px-5 py-3 text-base text-white font-semibold font-raleway rounded-lg bg-[#1c1c1c] hover:bg-white hover:text-black transition duration-500"
+            className="px-5 py-3 text-base text-white font-semibold font-raleway bg-pink-500 hover:bg-white hover:text-black transition duration-500"
           >
             Disconnect
           </button>
@@ -76,7 +76,7 @@ const Header = ({}) => {
       ) : (
         <button
           onClick={() => setIsOpenConnectModal(true)}
-          className="px-5 py-3 text-base text-white font-semibold font-raleway rounded-lg bg-[#1c1c1c] hover:bg-white hover:text-black transition duration-500"
+          className="px-5 py-3 text-base text-white font-semibold font-raleway bg-pink-500 hover:bg-white hover:text-black transition duration-500"
         >
           Connect Wallet
         </button>
@@ -88,11 +88,11 @@ const Header = ({}) => {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        <div className="absolute top-1/2 left-1/2 w-max -translate-x-1/2 -translate-y-1/2 bg-[#1c1c1c] flex flex-col space-y-5 justify-center items-start p-5 rounded-lg z-50">
+        <div className="absolute top-1/2 left-1/2 w-max -translate-x-1/2 -translate-y-1/2 bg-pink-500 flex flex-col space-y-5 justify-center items-start p-5 z-50">
           {WALLETS.map((wallet, index) => {
             return (
               <div
-                className="flex flex-row w-full justify-start items-center p-2 space-x-5 cursor-pointer text-white rounded-md bg-[#1c1c1c] hover:bg-white hover:text-black transition duration-500"
+                className="flex flex-row w-full justify-start items-center p-2 space-x-5 cursor-pointer text-white rounded-md bg-pink-500 hover:bg-white hover:text-black transition duration-500"
                 key={index}
                 onClick={() => connect(wallet)}
               >
