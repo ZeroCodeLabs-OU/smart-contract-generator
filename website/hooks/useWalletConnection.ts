@@ -14,11 +14,11 @@ const useWalletConnection = () => {
     } catch (e) {
       console.log(e);
     }
-    
+
     if (callBack) {
       callBack();
     }
-    
+
     activate(wallet.connector);
   };
 
