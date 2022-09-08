@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { NETWORK_TYPES, TAG_PROVIDER, WALLETS } from "@/libs/constants";
 import { truncateAddress } from "@/libs/utils";
 import useWalletConnection from "@/hooks/useWalletConnection";
+import Image from "next/image";
 
 const Header = ({}) => {
   const { active, account, chainId, connectWallet, disconnectWallet } =
@@ -45,42 +46,47 @@ const Header = ({}) => {
   }, []);
 
   return (
-    <div className="w-full flex flex-row justify-end space-x-5 px-5 py-2 bg-orange-400 z-50">
-      {active ? (
-        <>
-          <div className="hidden flex-row space-x-2 justify-center items-center md:flex">
-            <img className="w-5 h-5 object-fill" src={wallet?.icon} />
-            <p
-              className="text-base text-left text-white font-semibold font-raleway cursor-pointer"
-              onClick={copyAddress}
-            >
-              {truncateAddress(account)}
-            </p>
-            <p className="text-xs text-left text-white font-semibold font-raleway">
-              (&nbsp;
-              {chainId
-                ? NETWORK_TYPES[chainId]
+    <div className="w-full flex flex-row justify-between items-center space-x-5 px-5 py-2 bg-orange-400 z-50">
+      <div className="relative w-32 h-8 flex flex-row">
+        <Image src="/images/icons/icon-zero-code.png" layout="fill" alt="Icon"/>
+      </div>
+      <div className="flex flex-row justify-between align-center space-x-5">
+        {active ? (
+          <>
+            <div className="hidden flex-row space-x-2 justify-center items-center md:flex">
+              <img className="w-5 h-5 object-fill" src={wallet?.icon} />
+              <p
+                className="text-base text-left text-white font-semibold font-raleway cursor-pointer"
+                onClick={copyAddress}
+              >
+                {truncateAddress(account)}
+              </p>
+              <p className="text-xs text-left text-white font-semibold font-raleway">
+                (&nbsp;
+                {chainId
                   ? NETWORK_TYPES[chainId]
-                  : "Unkown Network"
-                : "Unkown Network"}
-              &nbsp;)
-            </p>
-          </div>
+                    ? NETWORK_TYPES[chainId]
+                    : "Unkown Network"
+                  : "Unkown Network"}
+                &nbsp;)
+              </p>
+            </div>
+            <button
+              onClick={disconnect}
+              className="px-5 py-3 text-base text-white font-semibold font-raleway bg-pink-500 hover:bg-white hover:text-black transition duration-500"
+            >
+              Disconnect
+            </button>
+          </>
+        ) : (
           <button
-            onClick={disconnect}
+            onClick={() => setIsOpenConnectModal(true)}
             className="px-5 py-3 text-base text-white font-semibold font-raleway bg-pink-500 hover:bg-white hover:text-black transition duration-500"
           >
-            Disconnect
+            Connect Wallet
           </button>
-        </>
-      ) : (
-        <button
-          onClick={() => setIsOpenConnectModal(true)}
-          className="px-5 py-3 text-base text-white font-semibold font-raleway bg-pink-500 hover:bg-white hover:text-black transition duration-500"
-        >
-          Connect Wallet
-        </button>
-      )}
+        )}
+      </div>
 
       <Modal
         open={isOpenConnectModal}
