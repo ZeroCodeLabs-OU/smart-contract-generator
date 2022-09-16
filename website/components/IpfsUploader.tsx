@@ -17,7 +17,15 @@ const ipfs = ipfsHttpClient({
   },
 });
 
-export const IpfsUploader = ({ setUrl }: { setUrl: any }) => {
+export const IpfsUploader = ({
+  label,
+  acceptType,
+  setUrl,
+}: {
+  label: string;
+  acceptType: string;
+  setUrl: any;
+}) => {
   const [files, setFiles] = useState<FileList | Array<any> | null>([]);
   const [filesUrl, setFilesUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,7 +55,7 @@ export const IpfsUploader = ({ setUrl }: { setUrl: any }) => {
     const length = results.length;
     // @ts-ignore
     const FilesHash = results[length - 1].cid._baseCache.get("z");
-    const FilesUrl = "https://ipfs.infura.io/ipfs/" + FilesHash;
+    const FilesUrl = "https://infura-ipfs.io/ipfs/" + FilesHash + "/";
     setUrl(FilesUrl);
     setFilesUrl(FilesUrl);
     setLoading(false);
@@ -60,41 +68,31 @@ export const IpfsUploader = ({ setUrl }: { setUrl: any }) => {
         return (
           <div>
             {uploaded ? (
-              <h5>
-                ✅{" "}
-                <a href={filesUrl} target="_blank" rel="noopener noreferrer">
-                  Files
-                </a>{" "}
-                Uploaded Successfully ✅
-              </h5>
+              <h4 className="my-3">
+                ✅&nbsp;
+                <a
+                  href={filesUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500"
+                >
+                  {files!.length} Files
+                </a>
+                &nbsp;Uploaded
+              </h4>
             ) : (
-              <div>
+              <div className="flex flex-row justify-center items-center">
                 <Button className="mb-3" type="submit">
-                  Upload Files
+                  Upload ({Array.from(files!).length} Files)
                 </Button>
-
-                <div className="flex flex-col justify-start items-start mb-3">
-                  {Array.from(files!).map((file) => {
-                    return (
-                      <div
-                        className="flex flex-row justify-between items-start"
-                        key={file.name}
-                      >
-                        <div className="text-left">{file.name}</div>
-                        <div className="">{file.size} kb</div>
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
             )}
           </div>
         );
       } else {
         return (
-          <div>
-            <h4>Uploading Files</h4>
-            <h4>Please Wait ...</h4>
+          <div className="fixed left-0 top-0 w-screen h-screen bg-orange-400 bg-opacity-30 flex flex-row justify-center items-center z-50">
+            <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-pink-500"></div>
           </div>
         );
       }
@@ -106,10 +104,11 @@ export const IpfsUploader = ({ setUrl }: { setUrl: any }) => {
       <form onSubmit={returnFilesUrl}>
         <FormControl fullWidth>
           <Button variant="contained" component="label">
-            Upload Files
+            Select {label} Files
             <input
               required
               type="file"
+              accept={acceptType}
               multiple
               onChange={(e) => setFiles(e.target.files)}
               hidden

@@ -65,6 +65,13 @@ const Home: NextPage = () => {
     }
   };
 
+  const copyUrlToClipboard = (url: string) => {
+    if (window && navigator) {
+      navigator.clipboard.writeText(url);
+      toast.success("Copied base image URL to clipboard!");
+    }
+  };
+
   const deploy = async (e: any = null) => {
     if (e) {
       e.preventDefault();
@@ -446,6 +453,9 @@ const Home: NextPage = () => {
                   onChange={(e) => {
                     setMetadataUpdatable(e.target.checked);
                   }}
+                  style={{
+                    color: "rgb(236 72 153)",
+                  }}
                 />
               }
               label="Metadata Updatable"
@@ -458,6 +468,9 @@ const Home: NextPage = () => {
                   onChange={(e) => {
                     setPrerevealed(e.target.checked);
                   }}
+                  style={{
+                    color: "rgb(236 72 153)",
+                  }}
                 />
               }
               label="Pre Reveal"
@@ -465,7 +478,18 @@ const Home: NextPage = () => {
           </FormGroup>
           {prerevealed ? (
             <>
-              <IpfsUploader setUrl={setPrerevealBaseUri} />
+              <div className="w-full flex flex-row justify-center items-start space-x-2">
+                <IpfsUploader
+                  label="Image"
+                  acceptType="image/*"
+                  setUrl={copyUrlToClipboard}
+                />
+                <IpfsUploader
+                  label="Json"
+                  acceptType=".json"
+                  setUrl={setPrerevealBaseUri}
+                />
+              </div>
               <FormControl fullWidth>
                 <TextField
                   required
@@ -480,7 +504,18 @@ const Home: NextPage = () => {
             </>
           ) : (
             <>
-              <IpfsUploader setUrl={setBaseUri} />
+              <div className="w-full flex flex-row justify-center items-start space-x-2">
+                <IpfsUploader
+                  label="Image"
+                  acceptType="image/*"
+                  setUrl={copyUrlToClipboard}
+                />
+                <IpfsUploader
+                  label="Json"
+                  acceptType=".json"
+                  setUrl={setBaseUri}
+                />
+              </div>
               <FormControl fullWidth>
                 <TextField
                   required
