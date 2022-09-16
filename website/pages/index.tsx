@@ -20,6 +20,7 @@ import Web3 from "web3";
 import { delay } from "@/libs/utils";
 import { useCSVReader } from "react-papaparse";
 import moment from "moment";
+import { IpfsUploader } from "@/components/IpfsUploader";
 
 const Home: NextPage = () => {
   const { active, account } = useWeb3React();
@@ -41,6 +42,7 @@ const Home: NextPage = () => {
   );
   const [metadataUpdatable, setMetadataUpdatable] = useState<boolean>(true);
   const [baseUri, setBaseUri] = useState<string>("");
+  const [prerevealed, setPrerevealed] = useState<boolean>(false);
   const [prerevealBaseUri, setPrerevealBaseUri] = useState<string>("");
   const [presaleMintStartDate, setPresaleMintSartDate] = useState<any>(
     new Date()
@@ -60,6 +62,13 @@ const Home: NextPage = () => {
     if (window && navigator) {
       navigator.clipboard.writeText(iframContent);
       toast.success("Copied to clipboard!");
+    }
+  };
+
+  const copyUrlToClipboard = (url: string) => {
+    if (window && navigator) {
+      navigator.clipboard.writeText(url);
+      toast.success("Copied base image URL to clipboard!");
     }
   };
 
@@ -444,33 +453,83 @@ const Home: NextPage = () => {
                   onChange={(e) => {
                     setMetadataUpdatable(e.target.checked);
                   }}
+                  style={{
+                    color: "rgb(236 72 153)",
+                  }}
                 />
               }
               label="Metadata Updatable"
             />
           </FormGroup>
-          <FormControl fullWidth>
-            <TextField
-              required
-              id="input-baseuri"
-              label="Base Uri"
-              value={baseUri}
-              onChange={(e) => {
-                setBaseUri(e.target.value);
-              }}
+          <FormGroup>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  onChange={(e) => {
+                    setPrerevealed(e.target.checked);
+                  }}
+                  style={{
+                    color: "rgb(236 72 153)",
+                  }}
+                />
+              }
+              label="Pre Reveal"
             />
-          </FormControl>
-          <FormControl fullWidth>
-            <TextField
-              required
-              id="input-prereveal-baseuri"
-              label="Pre Reveal Base Uri"
-              value={prerevealBaseUri}
-              onChange={(e) => {
-                setPrerevealBaseUri(e.target.value);
-              }}
-            />
-          </FormControl>
+          </FormGroup>
+          {prerevealed ? (
+            <>
+              <div className="w-full flex flex-row justify-center items-start space-x-2">
+                <IpfsUploader
+                  label="Image"
+                  acceptType="image/*"
+                  setUrl={copyUrlToClipboard}
+                />
+                <IpfsUploader
+                  label="Json"
+                  acceptType=".json"
+                  setUrl={setPrerevealBaseUri}
+                />
+              </div>
+              <FormControl fullWidth>
+                <TextField
+                  required
+                  id="input-prereveal-baseuri"
+                  label="Pre Reveal Base Uri (Upload artworks or enter directly)"
+                  value={prerevealBaseUri}
+                  onChange={(e) => {
+                    setPrerevealBaseUri(e.target.value);
+                  }}
+                />
+              </FormControl>
+            </>
+          ) : (
+            <>
+              <div className="w-full flex flex-row justify-center items-start space-x-2">
+                <IpfsUploader
+                  label="Image"
+                  acceptType="image/*"
+                  setUrl={copyUrlToClipboard}
+                />
+                <IpfsUploader
+                  label="Json"
+                  acceptType=".json"
+                  setUrl={setBaseUri}
+                />
+              </div>
+              <FormControl fullWidth>
+                <TextField
+                  required
+                  id="input-baseuri"
+                  label="Base Uri  (Upload artworks or enter directly)"
+                  value={baseUri}
+                  onChange={(e) => {
+                    setBaseUri(e.target.value);
+                  }}
+                />
+              </FormControl>
+            </>
+          )}
+
           <FormControl fullWidth>
             <DateTimePicker
               required
