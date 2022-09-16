@@ -20,6 +20,7 @@ import Web3 from "web3";
 import { delay } from "@/libs/utils";
 import { useCSVReader } from "react-papaparse";
 import moment from "moment";
+import { IpfsUploader } from "@/components/IpfsUploader";
 
 const Home: NextPage = () => {
   const { active, account } = useWeb3React();
@@ -41,6 +42,7 @@ const Home: NextPage = () => {
   );
   const [metadataUpdatable, setMetadataUpdatable] = useState<boolean>(true);
   const [baseUri, setBaseUri] = useState<string>("");
+  const [prerevealed, setPrerevealed] = useState<boolean>(false);
   const [prerevealBaseUri, setPrerevealBaseUri] = useState<string>("");
   const [presaleMintStartDate, setPresaleMintSartDate] = useState<any>(
     new Date()
@@ -449,28 +451,50 @@ const Home: NextPage = () => {
               label="Metadata Updatable"
             />
           </FormGroup>
-          <FormControl fullWidth>
-            <TextField
-              required
-              id="input-baseuri"
-              label="Base Uri"
-              value={baseUri}
-              onChange={(e) => {
-                setBaseUri(e.target.value);
-              }}
+          <FormGroup>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  onChange={(e) => {
+                    setPrerevealed(e.target.checked);
+                  }}
+                />
+              }
+              label="Pre Reveal"
             />
-          </FormControl>
-          <FormControl fullWidth>
-            <TextField
-              required
-              id="input-prereveal-baseuri"
-              label="Pre Reveal Base Uri"
-              value={prerevealBaseUri}
-              onChange={(e) => {
-                setPrerevealBaseUri(e.target.value);
-              }}
-            />
-          </FormControl>
+          </FormGroup>
+          {prerevealed ? (
+            <>
+              <IpfsUploader setUrl={setPrerevealBaseUri} />
+              <FormControl fullWidth>
+                <TextField
+                  required
+                  id="input-prereveal-baseuri"
+                  label="Pre Reveal Base Uri (Upload artworks or enter directly)"
+                  value={prerevealBaseUri}
+                  onChange={(e) => {
+                    setPrerevealBaseUri(e.target.value);
+                  }}
+                />
+              </FormControl>
+            </>
+          ) : (
+            <>
+              <IpfsUploader setUrl={setBaseUri} />
+              <FormControl fullWidth>
+                <TextField
+                  required
+                  id="input-baseuri"
+                  label="Base Uri  (Upload artworks or enter directly)"
+                  value={baseUri}
+                  onChange={(e) => {
+                    setBaseUri(e.target.value);
+                  }}
+                />
+              </FormControl>
+            </>
+          )}
+
           <FormControl fullWidth>
             <DateTimePicker
               required

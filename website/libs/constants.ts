@@ -24,6 +24,9 @@ export const IFRAME_BASE_URL = process.env.NEXT_PUBLIC_IFRAME_BASE_URL!;
 
 export const NFTPORT_API_KEY = process.env.NEXT_PUBLIC_NFTPORT_API_KEY!;
 
+export const INFURA_PROJECT_ID = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID!;
+export const INFURA_SECRET_KEY = process.env.NEXT_PUBLIC_INFURA_SECRET_KEY!;
+
 export const NETWORK_TYPES = [
   "",
   "Ethereum Mainnet",
