@@ -1,5 +1,7 @@
 # BETA
 
+test
+
 ## smart-contract-generator
 This repository is destinated to engineers who are going to develop the Smart Contract Generator feature for [Zero-Code.io](https://zero-code.io). The following description is more of a technical brief than a "how to use" description. We invite you to refer to this file as a reminder of what's needed to be done. 
 
