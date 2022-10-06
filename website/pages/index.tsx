@@ -25,7 +25,7 @@ import { IpfsUploader } from "@/components/IpfsUploader";
 const Home: NextPage = () => {
   const { active, account } = useWeb3React();
   const { CSVReader } = useCSVReader();
-  const [chain, setChain] = useState<string>("rinkeby");
+  const [chain, setChain] = useState<string>("goerli");
   const [type, setType] = useState<string>("erc721");
   const [name, setName] = useState<string>("");
   const [symbol, setSymbol] = useState<string>("");
@@ -77,8 +77,8 @@ const Home: NextPage = () => {
       e.preventDefault();
     }
 
-    if (chain != "rinkeby") {
-      toast.info("Only support Rinkeby for now.");
+    if (chain != "goerli") {
+      toast.info("Only support Goerli for now.");
       return;
     }
 
@@ -301,7 +301,7 @@ const Home: NextPage = () => {
                 setChain(e.target.value);
               }}
             >
-              <MenuItem value="rinkeby">Rinkeby</MenuItem>
+              <MenuItem value="goerli">Goerli</MenuItem>
               <MenuItem value="polygon">Polygon</MenuItem>
             </Select>
           </FormControl>
