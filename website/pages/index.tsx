@@ -302,7 +302,7 @@ const Home: NextPage = () => {
               }}
             >
               <MenuItem value="goerli">Goerli</MenuItem>
-              <MenuItem value="polygon">Polygon</MenuItem>
+              {/* <MenuItem value="polygon">Polygon</MenuItem> */}
             </Select>
           </FormControl>
           <FormControl fullWidth>
