@@ -31,8 +31,8 @@ export const NETWORK_TYPES = [
   "",
   "Ethereum Mainnet",
   "",
-  "Ropsten Test Network",
   "Goerli Test Network",
+  "Binance Test Network"
 ];
 
 export const CONTRACT_ABI = [

@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs-extra');
 const solc = require('solc');
 const cors = require('cors');
+const verifier = require('sol-verifier');
 
 
 const app = express();
@@ -107,10 +108,10 @@ async function compile(){
         console.log('\nBuild failed\n');
     }
 };
-compile();
+// compile();
 
 app.get('/erc721ByteCode', async(req,res)=>{
-    let data = fs.readFileSync('./build/NFTCollectionContract.json', 'utf8');
+    let data = fs.readFileSync('./build/NFTCollection.json', 'utf8');
     console.log(data);
     let data1 = JSON.parse(data);
     console.log(data1.abi)

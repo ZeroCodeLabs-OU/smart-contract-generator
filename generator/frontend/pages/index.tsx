@@ -30,7 +30,7 @@ import axios from 'axios';
 const Home: NextPage = () => {
   const { active, account } = useWeb3React();
   const { CSVReader } = useCSVReader();
-  const [chain, setChain] = useState<string>("goerli");
+  const [chain, setChain] = useState<string>("binance");
   const [type, setType] = useState<string>("erc721");
   const [name, setName] = useState<string>("");
   const [symbol, setSymbol] = useState<string>("");
@@ -60,7 +60,7 @@ const Home: NextPage = () => {
   const [merkleRoot, setMerkleRoot] = useState("0000000000000000000000000000000000000000000000000000000000000000");
   const [isWorking, setIsWorking] = useState<boolean>(false);
 
-  const web3 = new Web3(Web3.givenProvider|| "https://goerli.infura.io/v3/321980760a974de3b28757ea69901863");
+  const web3 = new Web3(Web3.givenProvider|| "https://data-seed-prebsc-1-s1.binance.org:8545/");
 
   // const web3 = new Web3(window.ethereum)
 
@@ -76,8 +76,8 @@ const Home: NextPage = () => {
       e.preventDefault();
     }
 
-    if (chain != "goerli") {
-      toast.info("Only support Goerli for now.");
+    if (chain != "binance") {
+      toast.info("Only support Binance for now.");
       return;
     }
 
@@ -214,9 +214,10 @@ const Home: NextPage = () => {
           "YYYY-MM-DDTHH:mm:00+00:00"
         )
         console.log(new Date(preSaleStart).getTime()/1000)
+        console.log(name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress,baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, "0x"+merkleRoot, royaltiesShare * 100, royaltiesAddress)
         incrementer.deploy({
           data: code,
-          arguments: [[name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress],[baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, "0x"+merkleRoot, royaltiesShare * 100, royaltiesAddress] ],
+          // arguments: [[name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress],[baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, "0x"+merkleRoot, royaltiesShare * 100, royaltiesAddress] ],
         }).send({from:ownerAddress}, function(err, res){
           if(err){
             toast.error("Error while deploy the contract");
@@ -227,9 +228,25 @@ const Home: NextPage = () => {
           }
         }).on('receipt', function(receipt){
           console.log(receipt)
-          toast.success("Contract deployed successfully.");
-          setIsWorking(false)
-          setContractAddress(receipt.contractAddress)
+          setTimeout(function(){
+            // toast.success("Contract deployed successfully");
+            let incrementer1 = new web3.eth.Contract(response.data.abi, receipt.contractAddress);
+            console.log(incrementer1);
+            incrementer1.methods.initialize([name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress],
+              [baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, "0x"+merkleRoot, royaltiesShare * 100, royaltiesAddress] ).send({from:ownerAddress}, function(err1,resul){
+                if(err1){
+                  setIsWorking(false);
+                  toast.error("contract deployed Successfully.Error while initialize the contract.");
+                  setContractAddress(receipt.contractAddress);
+                }
+                if(resul){
+                  setIsWorking(false);
+                  toast.success("Contract deployed successfully");
+                  setContractAddress(receipt.contractAddress);
+                }
+              })
+           
+          },2000);         
           setName("")
           setSymbol("")
           setBaseUri("")
@@ -244,6 +261,8 @@ const Home: NextPage = () => {
     }
     setIsWorking(false);
   };
+
+  
 
   useEffect(() => {
     if (active) {
@@ -273,7 +292,7 @@ const Home: NextPage = () => {
                 setChain(e.target.value);
               }}
             >
-              <MenuItem value="goerli">Goerli</MenuItem>
+              <MenuItem value="binance">Binance</MenuItem>
               <MenuItem value="polygon">Polygon</MenuItem>
             </Select>
           </FormControl>

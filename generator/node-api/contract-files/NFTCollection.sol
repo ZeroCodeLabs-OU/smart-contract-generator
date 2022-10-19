@@ -94,10 +94,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
     // This has to be 10k for royaltiesBps to be in basis points.
     uint16 public constant ROYALTIES_BASIS = 10000;
 
-    /********************
-     * Public variables *
-     ********************/
-
     /// The number of tokens remaining in the reserve
     /// @dev Managed by the contract
     uint256 public reserveRemaining;
@@ -107,7 +103,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
      ***************************/
 
     constructor() ERC721A("", "") {
-        _preventInitialization = true;
+        _preventInitialization = false;
     }
 
     /// Contract initializer
@@ -125,6 +121,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         _runtimeConfig = runtimeConfig;
 
         reserveRemaining = deploymentConfig.reservedSupply;
+        _preventInitialization = true;
     }
 
     /****************
