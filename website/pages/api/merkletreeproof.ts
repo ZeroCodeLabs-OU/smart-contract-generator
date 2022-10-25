@@ -13,7 +13,7 @@ export default async function handler(
     const { contract_address, account } = req.body;
 
     const response = await fetch(
-      "https://api.nftport.xyz/v0/me/contracts/collections?chain=rinkeby&include=merkle_proofs",
+      "https://api.nftport.xyz/v0/me/contracts/collections?chain=goerli&include=merkle_proofs",
       {
         method: "GET",
         headers: {
