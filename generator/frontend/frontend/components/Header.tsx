@@ -5,49 +5,20 @@ import { NETWORK_TYPES, TAG_PROVIDER, WALLETS } from "@/libs/constants";
 import { truncateAddress } from "@/libs/utils";
 import useWalletConnection from "@/hooks/useWalletConnection";
 import Image from "next/image";
-import Web3 from "web3";
 
-const Header = ({ }) => {
+const Header = ({}) => {
   const { active, account, chainId, connectWallet, disconnectWallet } =
     useWalletConnection();
   const [isOpenConnectModal, setIsOpenConnectModal] = useState<boolean>(false);
   const [wallet, setWallet] = useState<any>(null);
 
-  const web3 = new Web3(Web3.givenProvider || "https://bsc-dataseed1.binance.org/");
-
-  function checkArray(value:any, array:any) {
-    var status;
-    console.log(value, array)
-    for (var i = 0; i < array.length; i++) {
-      var name = array[i];
-      if (name == value) {
-        status = true;
-        break;
-      }
-    }
-    return status;
-  }
-
   const connect = (wallet: any) => {
-    connectWallet(wallet, async () => {
-      let status = await checkArray( await web3.eth.getChainId(), wallet.connector.supportedChainIds);
-      console.log(status)
-      // console.log(wallet.connector.supportedChainIds[0], await web3.eth.getChainId())
-      if (status == true) {
-        setWallet(wallet);
-        setIsOpenConnectModal(false);
-      } else {
-        // if(await web3.eth.getChainId() != 56){
-        //   toast.warn("Please select binance mainnet network")
-        // }else{
-          toast.warn("Please select binance mainnet network")
-        // }
-        
-        setIsOpenConnectModal(false);
-      }
-
+    connectWallet(wallet, () => {
+      setWallet(wallet);
+      setIsOpenConnectModal(false);
     });
   };
+
   const disconnect = () => {
     disconnectWallet(null);
   };
@@ -77,7 +48,7 @@ const Header = ({ }) => {
   return (
     <div className="w-full flex flex-row justify-between items-center space-x-5 px-5 py-2 bg-orange-400 z-50">
       <div className="relative w-32 h-8 flex flex-row">
-        <Image src="/images/icons/icon-zero-code.png" layout="fill" alt="Icon" />
+        <Image src="/images/icons/icon-zero-code.png" layout="fill" alt="Icon"/>
       </div>
       <div className="flex flex-row justify-between align-center space-x-5">
         {active ? (

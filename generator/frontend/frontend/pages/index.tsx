@@ -62,6 +62,7 @@ const Home: NextPage = () => {
 
   const web3 = new Web3(Web3.givenProvider|| "https://data-seed-prebsc-1-s1.binance.org:8545/");
 
+  // const web3 = new Web3(window.ethereum)
 
   const copyUrlToClipboard = (url: string) => {
     if (window && navigator) {
@@ -71,20 +72,9 @@ const Home: NextPage = () => {
   };
 
   const deploy = async (e: any = null) => {
-    // console.log(await web3.eth.getChainId()  , await web3.eth.getChainId() == 97 )
     if (e) {
       e.preventDefault();
     }
-
-    if(account == undefined){
-      toast.warn("Connect your wallet");
-      return;
-    }
-
-    // if(await web3.eth.getChainId() != 97 || await web3.eth.getChainId() != 56){
-    //   toast.warn("Your wallet is connected with another chain. Connect your wallet with binance chain.");
-    //   return;
-    // }
 
     if (chain != "binance") {
       toast.info("Only support Binance for now.");
@@ -208,7 +198,7 @@ const Home: NextPage = () => {
     try {
       let config:any = {
         method: 'get',
-        url: 'https://techyroots.com:5550/erc721ByteCode',
+        url: 'http://localhost:4000/erc721ByteCode',
         headers: { }
       };
       
@@ -238,7 +228,6 @@ const Home: NextPage = () => {
           }
         }).on('receipt', function(receipt){
           console.log(receipt)
-          let contractaddress:any = receipt.contractAddress;
           setTimeout(function(){
             // toast.success("Contract deployed successfully");
             let incrementer1 = new web3.eth.Contract(response.data.abi, receipt.contractAddress);
@@ -248,12 +237,12 @@ const Home: NextPage = () => {
                 if(err1){
                   setIsWorking(false);
                   toast.error("contract deployed Successfully.Error while initialize the contract.");
-                  setContractAddress(contractaddress);
+                  setContractAddress(receipt.contractAddress);
                 }
                 if(resul){
                   setIsWorking(false);
                   toast.success("Contract deployed successfully");
-                  setContractAddress(contractaddress);
+                  setContractAddress(receipt.contractAddress);
                 }
               })
            
