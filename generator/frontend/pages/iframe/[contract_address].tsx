@@ -5,21 +5,33 @@ import { useEffect, useState } from "react";
 import { useWeb3React } from "@web3-react/core";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
-import { FormControl, TextField } from "@material-ui/core";
-import { Contract } from "@ethersproject/contracts";
-import { CONTRACT_ABI } from "@/libs/constants";
+import { TextField } from "@material-ui/core";
+import { web3 } from "@/libs/constants";
 import useCatchTxError from "@/hooks/useCatchTxError";
-import { ethers } from "ethers";
+import { ERC721ABI, blockExplorer,baseURL } from "@/libs/constants";
+import axios from 'axios';
+
+
 
 const Home: NextPage = () => {
   const router = useRouter();
   const { contract_address } = router.query;
-  const { fetchWithCatchTxError, loading } = useCatchTxError();
-  const { active, account, library } = useWeb3React();
-  const [contractInfo, setContractInfo] = useState<any>(null);
+  const { loading } = useCatchTxError();
+  const { active, account } = useWeb3React();
   const [amount, setAmount] = useState<number>(1);
-  const [txLink, setTxLink] = useState<string>("");
+  const [txLink, setTxLink] = useState<any>(null);
   const [isWorking, setIsWorking] = useState<boolean>(false);
+
+  const copyClipboard = (e: any = null) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (window && navigator) {
+      navigator.clipboard.writeText(txLink);
+      toast.success("Copied to clipboard!");
+    }
+  };
 
   const mint = async () => {
     try {
@@ -28,71 +40,116 @@ const Home: NextPage = () => {
         return;
       }
 
-      if (!contract_address) {
-        toast.warn("Contract doesn't exist in our backend.");
-        return;
-      }
+      const address: any = contract_address;
 
-      if (amount < 1 || amount > contractInfo.tokens_per_mint) {
-        toast.warn(
-          `You can mint less than ${contractInfo.tokens_per_mint} NFTs per transaction.`
-        );
+      if (web3.utils.isAddress(address) == true && address.length != 42) {
+        toast.warn("Contract doesn't exist in our backend.");
         return;
       }
 
       setIsWorking(true);
 
-      const nftContract = new Contract(
-        contractInfo.contract_address,
-        CONTRACT_ABI,
-        library.getSigner()
-      );
 
-      const holdCount = Number(await nftContract.balanceOf(account));
-      if (holdCount + amount > contractInfo.tokens_per_person) {
+      const nftContract = new web3.eth.Contract(ERC721ABI, address);
+      const tokens_per_mint = Number(await nftContract.methods.tokensPerMint().call());
+      console.log(tokens_per_mint);
+
+      if (amount < 1 || amount > tokens_per_mint) {
         toast.warn(
-          `You can not mint more than ${contractInfo.tokens_per_person} NFTs.`
+          `You can mint ${tokens_per_mint} NFTs per transaction.`
+        );
+        return;
+      }
+
+      const holdCount = Number(await nftContract.methods.balanceOf(account).call());
+      const tokens_per_person = Number(await nftContract.methods.tokensPerPerson().call());
+      if (holdCount + amount > tokens_per_person) {
+        toast.warn(
+          `You can not mint more than ${tokens_per_person} NFTs.`
         );
         setIsWorking(false);
         return;
       }
 
-      const isPresale = await nftContract.presaleActive();
-      const isPublic = await nftContract.mintingActive();
+      const isPresale = await nftContract.methods.presaleActive().call();
+      const isPublic = await nftContract.methods.mintingActive().call();
+      const mintPrice = await nftContract.methods.publicMintPrice().call();
+      const preSalePrice = await nftContract.methods.presaleMintPrice().call();
+      const presaleMerkleRoot = await nftContract.methods.presaleMerkleRoot().call();
 
-      let tx = null;
 
       if (isPublic) {
-        tx = await fetchWithCatchTxError(() => {
-          return nftContract.mint(amount, {
-            value: ethers.utils.parseEther(
-              `${Number(contractInfo.mint_price) * amount}`
-            ),
-          });
-        });
-      } else if (isPresale) {
-        const proof = await getMerkleProof();
-        if (!proof) {
-          toast.error("You are not in whitelist.");
+        nftContract.methods.mint(amount).send({ from: account, value: mintPrice * amount }, function (err: any, result: any) {
+          if (err) {
+            setIsWorking(false);
+            toast.error("Transaction Error");
+
+          }
+          if (result) {
+            setIsWorking(true);
+            toast.success("Your transaction is sent. Wait for confirmation.");
+          }
+        }).on('receipt', async function (receipt: any) {
+          console.log(receipt)
+          if (receipt.status == true) {
+            setTxLink(await blockExplorer() + receipt.transactionHash)
+            setAmount(1);
+            toast.success("You successfully minted NFT.");
+          } else {
+            toast.error("Error while mint.");
+          }
           setIsWorking(false);
-          return;
-        }
-        tx = await fetchWithCatchTxError(() => {
-          return nftContract.presaleMint(amount, proof, {
-            value: ethers.utils.parseEther(
-              `${Number(contractInfo.presale_mint_price) * amount}`
-            ),
+        })
+      }
+      else if (isPresale) {
+        console.log("inside");
+        var config: any = {
+          method: 'get',
+          url: baseURL+`getMerkleProof?merkle=${presaleMerkleRoot}&address=${account}`,
+          headers: {}
+        };
+        axios(config)
+          .then(function (response) {           
+              const proof = response.data.data;
+              if (proof.length == 0) {
+                toast.error("You are not in whitelist.");
+                setIsWorking(false);
+                return;
+              }
+              nftContract.methods.presaleMint(amount, proof).send({ from: account, value: preSalePrice * amount }, function (err: any, result: any) {
+                if (err) {
+                  setIsWorking(false);
+                  toast.error("Transaction Error");
+
+                }
+                if (result) {
+                  setIsWorking(true);
+                  toast.success("Your transaction is sent. Wait for confirmation.");
+                }
+              }).on('receipt', async function (receipt: any) {
+                console.log(receipt)
+                if (receipt.status == true) {
+                  setTxLink(await blockExplorer() + receipt.transactionHash)
+                  setAmount(1);
+                  toast.success("You successfully minted NFT.");
+                } else {
+                  toast.error("Error while mint.");
+                }
+                setIsWorking(false);
+              })
+            
+          })
+          .catch(function (error) {
+            console.log(error);
           });
-        });
-      } else {
+
+      }
+      else {
         toast.warn("Minting is not started yet.");
         setIsWorking(false);
         return;
       }
 
-      if (tx) {
-        toast.success("You successfully minted NFT.");
-      }
     } catch (e) {
       console.log(e);
     } finally {
@@ -100,59 +157,16 @@ const Home: NextPage = () => {
     }
   };
 
-  const getContractInfo = async () => {
-    const response = await fetch(`/api/fetchcollection`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ contract_address }),
-    });
-    if (response.ok) {
-      const data = await response.json();
-      return data;
-    } else {
-      const data = await response.json();
-      toast.error(data?.error?.message);
-    }
-    return null;
-  };
-
-  const getMerkleProof = async () => {
-    const response = await fetch(`/api/merkletreeproof`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ contract_address, account }),
-    });
-    if (response.ok) {
-      const data = await response.json();
-      return data.proof;
-    } else {
-      const data = await response.json();
-      toast.error(data?.error?.message);
-    }
-    return null;
-  };
-
   useEffect(() => {
     (async () => {
-      if (!contract_address) return;
-
-      setIsWorking(true);
-
-      const data = await getContractInfo();
-      if (data) {
-        setContractInfo(data);
-      } else {
-        setContractInfo(null);
+      let address: any = contract_address;
+      if (web3.utils.isAddress(address) == true && address.length != 42) {
         toast.error("Contract doesn't exist in our backend.");
+        return
       }
-
       setIsWorking(false);
     })();
-  }, [contract_address]);
+  }, []);
 
   return (
     <Layout>
@@ -178,6 +192,13 @@ const Home: NextPage = () => {
           MINT
         </button>
       </div>
+      {
+        txLink != null ?
+
+          <div className="block w-full cursor-pointer select-none p-5 border border-gray-500 rounded-md hover:bg-gray-100 whitespace-pre-wrap overflow-hidden" style={{ padding: "20px 95px", maxWidth: "1000px", margin: "auto" }} onClick={copyClipboard}>
+            {txLink}
+          </div> : ""
+      }
 
       {(isWorking || loading) && (
         <div className="fixed left-0 top-0 w-screen h-screen bg-orange-400 bg-opacity-30 flex flex-row justify-center items-center z-50">

@@ -12,6 +12,7 @@ const Header = ({ }) => {
     useWalletConnection();
   const [isOpenConnectModal, setIsOpenConnectModal] = useState<boolean>(false);
   const [wallet, setWallet] = useState<any>(null);
+  const [chainIds, setChain] = useState<any>();
 
   const web3 = new Web3(Web3.givenProvider || "https://bsc-dataseed1.binance.org/");
 
@@ -31,18 +32,12 @@ const Header = ({ }) => {
   const connect = (wallet: any) => {
     connectWallet(wallet, async () => {
       let status = await checkArray( await web3.eth.getChainId(), wallet.connector.supportedChainIds);
-      console.log(status)
-      // console.log(wallet.connector.supportedChainIds[0], await web3.eth.getChainId())
       if (status == true) {
         setWallet(wallet);
         setIsOpenConnectModal(false);
+        setChain(await web3.eth.getChainId())
       } else {
-        // if(await web3.eth.getChainId() != 56){
-        //   toast.warn("Please select binance mainnet network")
-        // }else{
-          toast.warn("Please select binance mainnet network")
-        // }
-        
+        toast.warn("Please select binance testnet or mainnet network")      
         setIsOpenConnectModal(false);
       }
 
@@ -92,12 +87,13 @@ const Header = ({ }) => {
               </p>
               <p className="text-xs text-left text-white font-semibold font-raleway">
                 (&nbsp;
-                {chainId
-                  ? NETWORK_TYPES[chainId]
+                
+                {NETWORK_TYPES(chainIds)})
+                  {/* ? NETWORK_TYPES[chainId]
                     ? NETWORK_TYPES[chainId]
                     : "Unkown Network"
                   : "Unkown Network"}
-                &nbsp;)
+                &nbsp;) */}
               </p>
             </div>
             <button

@@ -31,6 +31,8 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         uint256 reservedSupply;
         /// The maximum number of tokens the user can mint per transaction.
         uint256 tokensPerMint;
+        /// Tokens per person
+        uint256 tokenPerPerson;
         // Treasury address is the address where minting fees can be withdrawn to.
         // Use `withdrawFees()` to transfer the entire contract balance to the treasury address.
         address payable treasuryAddress;
@@ -490,6 +492,10 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
 
     function tokensPerMint() public view returns (uint256) {
         return _deploymentConfig.tokensPerMint;
+    }
+
+    function tokensPerPerson() public view returns (uint256){
+        return _deploymentConfig.tokenPerPerson;
     }
 
     function treasuryAddress() public view returns (address) {

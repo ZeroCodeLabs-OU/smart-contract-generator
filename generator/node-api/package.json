@@ -14,6 +14,8 @@
     "ethers": "^5.7.1",
     "express": "^4.18.2",
     "fs-extra": "^8.1.0",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.3.0",
     "sol-verifier": "^2.1.4",
     "solc": "0.8.15",
     "web3": "^1.8.0"

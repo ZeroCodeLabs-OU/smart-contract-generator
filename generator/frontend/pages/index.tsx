@@ -15,16 +15,12 @@ import { DateTimePicker } from "@material-ui/pickers";
 import { useEffect, useState } from "react";
 import { useWeb3React } from "@web3-react/core";
 import { toast } from "react-toastify";
-// import {CONTRACT_ABI, IFRAME_BASE_URL, NFTPORT_API_KEY } from "@/libs/constants";
-import Web3 from "web3";
-// import { delay } from "@/libs/utils";
+import { IFRAME_BASE_URL, NFTPORT_API_KEY, web3, baseURL} from "@/libs/constants";
 import { useCSVReader } from "react-papaparse";
 import moment from "moment";
-import { MerkleTree } from "merkletreejs";
-import keccak256 from "keccak256";
 import { IpfsUploader } from "@/components/IpfsUploader";
 import axios from 'axios';
-// import {erc721, erc721Bytecode} from "@/libs/constants"
+
 
 
 const Home: NextPage = () => {
@@ -56,11 +52,21 @@ const Home: NextPage = () => {
   const [royaltiesShare, setRoyaltiesShare] = useState<number>(0);
   const [royaltiesAddress, setRoyaltiesAddress] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string>("");
-  // const [iframContent, setIframeContent] = useState<string>("");
+  const [iframContent, setIframeContent] = useState<string>("");
   const [merkleRoot, setMerkleRoot] = useState("0000000000000000000000000000000000000000000000000000000000000000");
   const [isWorking, setIsWorking] = useState<boolean>(false);
 
-  const web3 = new Web3(Web3.givenProvider|| "https://data-seed-prebsc-1-s1.binance.org:8545/");
+
+    const copyClipboard = (e: any = null) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (window && navigator) {
+      navigator.clipboard.writeText(iframContent);
+      toast.success("Copied to clipboard!");
+    }
+  };
 
 
   const copyUrlToClipboard = (url: string) => {
@@ -160,16 +166,16 @@ const Home: NextPage = () => {
     }
 
     if (
-      !Web3.utils.isAddress(ownerAddress) ||
-      !Web3.utils.isAddress(treasuryAddress) ||
-      !Web3.utils.isAddress(royaltiesAddress)
+      !web3.utils.isAddress(ownerAddress) ||
+      !web3.utils.isAddress(treasuryAddress) ||
+      !web3.utils.isAddress(royaltiesAddress)
     ) {
       toast.warn("Please enter valid address.");
       return;
     }
 
     for (let address of presaleWhitelist) {
-      if (!Web3.utils.isAddress(address)) {
+      if (!web3.utils.isAddress(address)) {
         toast.warn("Please import valid whitelist.");
         return;
       }
@@ -183,32 +189,12 @@ const Home: NextPage = () => {
       toast.warn("Please enter royalties share percentage.");
       return;
     }
-
-    // let deployBody: any = {
-    //   chain,
-    //   name,
-    //   symbol,
-    //   max_supply: maxSupply,
-    //   team_reserve: teamReserve,
-    //   mint_price: mintPrice,
-    //   presale_mint_price: presaleMintPrice,
-    //   tokens_per_mint: maxNftsPerTx,
-    //   owner_address: ownerAddress,
-    //   treasury_address: treasuryAddress,
-    //   public_mint_start_date: new Date(publicMintStartDate*1000).getTime(),
-    //   metadata_updatable: metadataUpdatable,
-    //   base_uri: baseUri,
-    //   prereveal_token_uri: prerevealBaseUri,
-    //   presale_mint_start_date: new Date(presaleMintStartDate*1000).getTime(),
-    //   presale_whitelisted_addresses: presaleWhitelist,
-    //   royalties_share: royaltiesShare * 100,
-    //   royalties_address: royaltiesAddress,
-    // };
     setContractAddress("");
     try {
+      
       let config:any = {
         method: 'get',
-        url: 'https://techyroots.com:5550/erc721ByteCode',
+        url: baseURL +'erc721ByteCode',
         headers: { }
       };
       
@@ -224,7 +210,7 @@ const Home: NextPage = () => {
           "YYYY-MM-DDTHH:mm:00+00:00"
         )
         console.log(new Date(preSaleStart).getTime()/1000)
-        console.log(name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress,baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, "0x"+merkleRoot, royaltiesShare * 100, royaltiesAddress)
+        console.log(name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress,baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress)
         incrementer.deploy({
           data: code,
           // arguments: [[name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress],[baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, "0x"+merkleRoot, royaltiesShare * 100, royaltiesAddress] ],
@@ -243,8 +229,8 @@ const Home: NextPage = () => {
             // toast.success("Contract deployed successfully");
             let incrementer1 = new web3.eth.Contract(response.data.abi, receipt.contractAddress);
             console.log(incrementer1);
-            incrementer1.methods.initialize([name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress],
-              [baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, "0x"+merkleRoot, royaltiesShare * 100, royaltiesAddress] ).send({from:ownerAddress}, function(err1,resul){
+            incrementer1.methods.initialize([name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
+              [baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress] ).send({from:ownerAddress}, function(err1,resul){
                 if(err1){
                   setIsWorking(false);
                   toast.error("contract deployed Successfully.Error while initialize the contract.");
@@ -256,6 +242,9 @@ const Home: NextPage = () => {
                   setContractAddress(contractaddress);
                 }
               })
+              setIframeContent(
+                `${IFRAME_BASE_URL}/iframe/${contractaddress}`
+              );
            
           },2000);         
           setName("")
@@ -272,6 +261,8 @@ const Home: NextPage = () => {
     }
     setIsWorking(false);
   };
+
+
 
   
 
@@ -550,7 +541,7 @@ const Home: NextPage = () => {
             />
           </FormControl>
           <CSVReader
-            onUploadAccepted={(results: any) => {
+            onUploadAccepted={async(results: any) => {
               if (results && results.data && results.data.length > 0) {
                 let whitelist = [];
                 for (let item of results.data) {
@@ -559,10 +550,20 @@ const Home: NextPage = () => {
                   }
                 }
                 setPresaleWhitelist(whitelist);
-                const tree = new MerkleTree(whitelist, keccak256)
-                const root = tree.getRoot().toString('hex')
-                console.log(root)
-                setMerkleRoot(root);
+                let address = JSON.stringify(whitelist).replace(/'/g, '"');
+                let config:any = {
+                    method: 'get',
+                    url: baseURL + 'getMerkleRoot?data='+address,
+                    headers: { }
+                };                 
+                axios(config)
+                .then(function (response) {
+                  setMerkleRoot(response.data.data);
+                })
+                .catch(function (error) {
+                  console.log(error);
+                });
+                
               }
             }}
           >
@@ -631,12 +632,12 @@ const Home: NextPage = () => {
               <h1 className="text-center text-lg text-blue-500 my-10">
                 Contract Address: <b>{contractAddress}</b>
               </h1>
-              {/* <div
+              <div
                 className="w-full cursor-pointer select-none p-5 border border-gray-500 rounded-md hover:bg-gray-100 whitespace-pre-wrap overflow-hidden"
                 onClick={copyClipboard}
-              > */}
-                {/* {iframContent} */}
-              {/* </div> */}
+              >
+                {iframContent}
+               </div>
             </>
           )}
         </div>
