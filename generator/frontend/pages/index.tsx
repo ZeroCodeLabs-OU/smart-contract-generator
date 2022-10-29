@@ -20,6 +20,7 @@ import { useCSVReader } from "react-papaparse";
 import moment from "moment";
 import { IpfsUploader } from "@/components/IpfsUploader";
 import axios from 'axios';
+import BigNumber from 'bignumber.js';
 
 
 
@@ -53,7 +54,7 @@ const Home: NextPage = () => {
   const [royaltiesAddress, setRoyaltiesAddress] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string>("");
   const [iframContent, setIframeContent] = useState<string>("");
-  const [merkleRoot, setMerkleRoot] = useState("0000000000000000000000000000000000000000000000000000000000000000");
+  const [merkleRoot, setMerkleRoot] = useState("0x0000000000000000000000000000000000000000000000000000000000000000");
   const [isWorking, setIsWorking] = useState<boolean>(false);
 
 
@@ -203,13 +204,13 @@ const Home: NextPage = () => {
         console.log(response,"response");       
         let code = '0x' + response.data.bytecode;
         const incrementer = new web3.eth.Contract(response.data.abi);
-        let publicSaleStart = moment(publicMintStartDate).format(
+        let publicSaleStart = moment.utc(publicMintStartDate).format(
           "YYYY-MM-DDTHH:mm:00+00:00"
         )
-        let preSaleStart = moment(presaleMintStartDate).format(
+        let preSaleStart = moment.utc(presaleMintStartDate).format(
           "YYYY-MM-DDTHH:mm:00+00:00"
         )
-        console.log(new Date(preSaleStart).getTime()/1000)
+        console.log(publicSaleStart)
         console.log(name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress,baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress)
         incrementer.deploy({
           data: code,
@@ -222,15 +223,17 @@ const Home: NextPage = () => {
             setIsWorking(true);
             toast.success("Your Transaction is sent. Wait For confirmation");
           }
-        }).on('receipt', function(receipt){
+        }).on('receipt', function(receipt:any){
           console.log(receipt)
           let contractaddress:any = receipt.contractAddress;
           setTimeout(function(){
             // toast.success("Contract deployed successfully");
             let incrementer1 = new web3.eth.Contract(response.data.abi, receipt.contractAddress);
             console.log(incrementer1);
+            let mintPriceETH = BigNumber(`${(mintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
+            let presaleMintPriceETH = BigNumber(`${(presaleMintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
             incrementer1.methods.initialize([name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
-              [baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress] ).send({from:ownerAddress}, function(err1,resul){
+              [baseUri, metadataUpdatable, mintPriceETH ,"false", presaleMintPriceETH ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress] ).send({from:ownerAddress}, function(err1,resul){
                 if(err1){
                   setIsWorking(false);
                   toast.error("contract deployed Successfully.Error while initialize the contract.");

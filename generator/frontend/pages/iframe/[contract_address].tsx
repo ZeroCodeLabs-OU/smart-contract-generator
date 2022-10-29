@@ -48,7 +48,7 @@ const Home: NextPage = () => {
       }
 
       setIsWorking(true);
-
+      setTxLink("")
 
       const nftContract = new web3.eth.Contract(ERC721ABI, address);
       const tokens_per_mint = Number(await nftContract.methods.tokensPerMint().call());
