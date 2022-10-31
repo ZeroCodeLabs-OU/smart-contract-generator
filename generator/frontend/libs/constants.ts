@@ -32,18 +32,8 @@ export const NETWORK_TYPES = (chainId:any) =>{
   if(chainId === 56){
     return "Binance Mainnet";
   }else{
-  // }else if(chainId === 97){
     return "Binance Testnet";
   }
-  // }else if(chainId === 1){
-  //   return "Ethereum Mainnet";
-  // }else if(chainId === 5){
-  //   return "Goerli Testnet";
-  // }else if(chainId === 80001){
-  //   return "Mumbai Testnet";
-  // }else if(chainId === 137){
-  //   return "Polygon Mainnet";
-  // }
 }
 
 export const web3 = new Web3(Web3.givenProvider|| "https://data-seed-prebsc-1-s1.binance.org:8545/");

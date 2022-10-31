@@ -233,7 +233,7 @@ const Home: NextPage = () => {
             let mintPriceETH = BigNumber(`${(mintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
             let presaleMintPriceETH = BigNumber(`${(presaleMintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
             incrementer1.methods.initialize([name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
-              [baseUri, metadataUpdatable, mintPriceETH ,"false", presaleMintPriceETH ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress] ).send({from:ownerAddress}, function(err1,resul){
+              [baseUri, metadataUpdatable, mintPriceETH ,"false", presaleMintPriceETH ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress] ).send({from:ownerAddress}, function(err1:any,resul:any){
                 if(err1){
                   setIsWorking(false);
                   toast.error("contract deployed Successfully.Error while initialize the contract.");
