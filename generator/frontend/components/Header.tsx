@@ -88,7 +88,7 @@ const Header = ({ }) => {
               <p className="text-xs text-left text-white font-semibold font-raleway">
                 (&nbsp;
                 
-                {NETWORK_TYPES(chainIds)})
+                {chainIds == 56?"Binance Mainnet":"Binance Testnet"})
                   {/* ? NETWORK_TYPES[chainId]
                     ? NETWORK_TYPES[chainId]
                     : "Unkown Network"

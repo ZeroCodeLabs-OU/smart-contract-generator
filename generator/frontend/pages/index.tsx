@@ -200,7 +200,7 @@ const Home: NextPage = () => {
       };
       
       axios(config)
-      .then(async function (response) {
+      .then(async function (response: any) {
         console.log(response,"response");       
         let code = '0x' + response.data.bytecode;
         const incrementer = new web3.eth.Contract(response.data.abi);
@@ -560,7 +560,7 @@ const Home: NextPage = () => {
                     headers: { }
                 };                 
                 axios(config)
-                .then(function (response) {
+                .then(function (response: any) {
                   setMerkleRoot(response.data.data);
                 })
                 .catch(function (error) {

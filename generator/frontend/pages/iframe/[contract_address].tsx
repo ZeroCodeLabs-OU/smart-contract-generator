@@ -109,7 +109,7 @@ const Home: NextPage = () => {
           headers: {}
         };
         axios(config)
-          .then(function (response) {           
+          .then(function (response: any) {           
               const proof = response.data.data;
               if (proof.length == 0) {
                 toast.error("You are not in whitelist.");
