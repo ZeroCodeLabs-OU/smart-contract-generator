@@ -130,7 +130,8 @@ async function compile(){
 // compile();
 
 app.get('/erc721ByteCode', async(req,res)=>{
-    let data = fs.readFileSync('./build/NFTCollection.json', 'utf8');
+    let fileName = req.query.file;
+    let data = fs.readFileSync(`./build/${fileName}.json`, 'utf8');
     console.log(data);
     let data1 = JSON.parse(data);
     console.log(data1.abi)

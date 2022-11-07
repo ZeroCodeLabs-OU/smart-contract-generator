@@ -1,3 +1,4 @@
+import {useContext} from "react"
 import type { NextPage } from "next";
 import Layout from "@/components/Layout";
 import Header from "@/components/Header";
@@ -21,11 +22,14 @@ import moment from "moment";
 import { IpfsUploader } from "@/components/IpfsUploader";
 import axios from 'axios';
 import BigNumber from 'bignumber.js';
+import {CurrencyContext} from "./CurrencyProvider"
+import Web3 from "web3"
 
 
 
 const Home: NextPage = () => {
-  const { active, account } = useWeb3React();
+  const {handleCurrencyChange, currency} = useContext(CurrencyContext);
+  const { active, account,library } = useWeb3React();
   const { CSVReader } = useCSVReader();
   const [chain, setChain] = useState<string>("binance");
   const [type, setType] = useState<string>("erc721");
@@ -54,9 +58,14 @@ const Home: NextPage = () => {
   const [royaltiesAddress, setRoyaltiesAddress] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string>("");
   const [iframContent, setIframeContent] = useState<string>("");
-  const [merkleRoot, setMerkleRoot] = useState("0x0000000000000000000000000000000000000000000000000000000000000000");
+  const [merkleRoot, setMerkleRoot] = useState<any>("0x0000000000000000000000000000000000000000000000000000000000000000");
   const [isWorking, setIsWorking] = useState<boolean>(false);
 
+  const chainsOptions = [
+    { value: 'ETH', label: 'Ethereum' },
+    { value: 'BSC', label: 'Binance' },
+    { value: 'MATIC', label: 'Polygon' }
+  ]
 
     const copyClipboard = (e: any = null) => {
     if (e) {
@@ -76,6 +85,17 @@ const Home: NextPage = () => {
       toast.success("Copied base image URL to clipboard!");
     }
   };
+  const switchNetwork = async (chain:any) => {
+    try {
+      const chainHex = Web3.utils.toHex(chain)
+      await library.provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: chainHex }],
+      });
+    } catch (switchError) {
+     toast.warn("Please make sure you have wallet connected")
+    }
+  };
 
   const deploy = async (e: any = null) => {
     // console.log(await web3.eth.getChainId()  , await web3.eth.getChainId() == 97 )
@@ -88,19 +108,14 @@ const Home: NextPage = () => {
       return;
     }
 
-    // if(await web3.eth.getChainId() != 97 || await web3.eth.getChainId() != 56){
-    //   toast.warn("Your wallet is connected with another chain. Connect your wallet with binance chain.");
-    //   return;
-    // }
+    let web3: any;
 
-    if (chain != "binance") {
-      toast.info("Only support Binance for now.");
-      return;
-    }
-
-    if (type != "erc721") {
-      toast.info("Only support ERC721 for now.");
-      return;
+    if (currency === 'bsc') {
+      web3 = new Web3( Web3.givenProvider ||  "https://data-seed-prebsc-1-s1.binance.org:8545/");
+    } else if (currency === 'matic') {
+      web3 = new Web3( Web3.givenProvider ||  "https://matic-mumbai.chainstacklabs.com/");
+    } else {
+      web3 = new Web3( Web3.givenProvider ||   "https://goerli.infura.io/v3/321980760a974de3b28757ea69901863/");
     }
 
     if (name == "" || symbol == "") {
@@ -193,29 +208,36 @@ const Home: NextPage = () => {
     setContractAddress("");
     try {
       
-      let config:any = {
-        method: 'get',
-        url: baseURL +'erc721ByteCode',
-        headers: { }
-      };
+      let config:any;
+      if(type == 'erc721'){
+        config = {
+          method: 'get',
+          url: baseURL +'erc721ByteCode?file=NFTCollection',
+          headers: { }
+        };
+      }else{
+        config = {
+          method: 'get',
+          url: baseURL +'erc721ByteCode?file=MyToken',
+          headers: { }
+        };
+      }  
       
       axios(config)
-      .then(async function (response: any) {
+      .then(async function (response:any) {
         console.log(response,"response");       
-        let code = '0x' + response.data.bytecode;
-        const incrementer = new web3.eth.Contract(response.data.abi);
-        let publicSaleStart = moment.utc(publicMintStartDate).format(
+        const code:any = '0x' + response.data.bytecode;
+        const incrementer:any = new web3.eth.Contract(response.data.abi);
+        const publicSaleStart:any = moment.utc(publicMintStartDate).format(
           "YYYY-MM-DDTHH:mm:00+00:00"
         )
-        let preSaleStart = moment.utc(presaleMintStartDate).format(
+        const preSaleStart:any = moment.utc(presaleMintStartDate).format(
           "YYYY-MM-DDTHH:mm:00+00:00"
         )
-        console.log(publicSaleStart)
-        console.log(name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress,baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress)
         incrementer.deploy({
           data: code,
           // arguments: [[name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress],[baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, "0x"+merkleRoot, royaltiesShare * 100, royaltiesAddress] ],
-        }).send({from:ownerAddress}, function(err, res){
+        }).send({from:ownerAddress}, function(err:any, res:any){
           if(err){
             toast.error("Error while deploy the contract");
           }
@@ -246,7 +268,7 @@ const Home: NextPage = () => {
                 }
               })
               setIframeContent(
-                `${IFRAME_BASE_URL}/iframe/${contractaddress}`
+                `${IFRAME_BASE_URL}/iframe/${contractaddress}?type=${type}&curr=${currency}`
               );
            
           },2000);         
@@ -291,14 +313,15 @@ const Home: NextPage = () => {
             <Select
               labelId="select-chain-label"
               id="select-chain"
-              value={chain}
+              value={currency}
               label="Chain"
-              onChange={(e) => {
-                setChain(e.target.value);
+              onChange={(selectedOption) => {
+                handleCurrencyChange(selectedOption.target.value, switchNetwork);
               }}
             >
-              <MenuItem value="binance">Binance</MenuItem>
-              <MenuItem value="polygon">Polygon</MenuItem>
+              <MenuItem value="bsc">Binance</MenuItem>
+              <MenuItem value="matic">Polygon</MenuItem> 
+              <MenuItem value="eth">Ethereum</MenuItem>
             </Select>
           </FormControl>
           <FormControl fullWidth>
@@ -560,8 +583,8 @@ const Home: NextPage = () => {
                     headers: { }
                 };                 
                 axios(config)
-                .then(function (response: any) {
-                  setMerkleRoot(response.data.data);
+                .then(function (response) {
+                  setMerkleRoot(response['data']['data']);
                 })
                 .catch(function (error) {
                   console.log(error);

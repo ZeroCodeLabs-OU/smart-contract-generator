@@ -6,6 +6,7 @@ import MomentUtils from "@date-io/moment";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import "@/styles/globals.css";
+import CurrencyProvider from "./CurrencyProvider"
 
 function getLibrary(provider: any) {
   return new Web3Provider(provider);
@@ -13,16 +14,23 @@ function getLibrary(provider: any) {
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <MuiPickersUtilsProvider utils={MomentUtils}>
-      <ToastContainer
-        theme="colored"
-        position="top-right"
-        bodyClassName="toastBody"
-      />
-      <Web3ReactProvider getLibrary={getLibrary}>
-        <Component {...pageProps} />
-      </Web3ReactProvider>
-    </MuiPickersUtilsProvider>
+    
+      <MuiPickersUtilsProvider utils={MomentUtils}>
+        <ToastContainer
+          theme="colored"
+          position="top-right"
+          bodyClassName="toastBody"
+        />
+        
+        <Web3ReactProvider getLibrary={getLibrary}>
+          <CurrencyProvider>
+            <Component {...pageProps} />
+          </CurrencyProvider>
+        </Web3ReactProvider>
+        
+      </MuiPickersUtilsProvider>
+      
+    
   );
 }
 

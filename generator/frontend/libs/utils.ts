@@ -1,5 +1,3 @@
-import { toast } from "react-toastify";
-
 type ErrorData = {
   code: number;
   message: string;

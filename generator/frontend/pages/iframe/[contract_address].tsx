@@ -1,3 +1,4 @@
+import { useContext } from "react"
 import type { NextPage } from "next";
 import Layout from "@/components/Layout";
 import Header from "@/components/Header";
@@ -8,19 +9,22 @@ import { useRouter } from "next/router";
 import { TextField } from "@material-ui/core";
 import { web3 } from "@/libs/constants";
 import useCatchTxError from "@/hooks/useCatchTxError";
-import { ERC721ABI, blockExplorer,baseURL } from "@/libs/constants";
+import { ERC721ABI, ERC1155ABI, blockExplorer, baseURL } from "@/libs/constants";
 import axios from 'axios';
-
+import { CurrencyContext } from "../CurrencyProvider"
+import Web3 from 'web3';
 
 
 const Home: NextPage = () => {
   const router = useRouter();
-  const { contract_address } = router.query;
+  const { handleCurrencyChange, currency } = useContext(CurrencyContext);
+  const { contract_address, type, curr } = router.query;
   const { loading } = useCatchTxError();
-  const { active, account } = useWeb3React();
+  const { active, account, library } = useWeb3React();
   const [amount, setAmount] = useState<number>(1);
   const [txLink, setTxLink] = useState<any>(null);
   const [isWorking, setIsWorking] = useState<boolean>(false);
+  const [tokenId, setTokenId] = useState<number>(1);
 
   const copyClipboard = (e: any = null) => {
     if (e) {
@@ -32,6 +36,24 @@ const Home: NextPage = () => {
       toast.success("Copied to clipboard!");
     }
   };
+
+  const web3: any = curr === 'bsc' ? new Web3(Web3.givenProvider || "https://data-seed-prebsc-1-s1.binance.org:8545/") : curr === 'matic' ? new Web3(Web3.givenProvider || "https://matic-mumbai.chainstacklabs.com/")
+    : new Web3(Web3.givenProvider || "https://goerli.infura.io/v3/321980760a974de3b28757ea69901863/");
+
+  const switchNetwork = async (chain: any) => {
+    try {
+      console.log(chain,"chain")
+      const chainHex = Web3.utils.toHex(chain)
+      await library.provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: chainHex }],
+      });
+    } catch (switchError) {
+      //  console.log(switchError)
+      toast.warn("Please make sure you have wallet connected")
+    }
+  };
+
 
   const mint = async () => {
     try {
@@ -48,10 +70,10 @@ const Home: NextPage = () => {
       }
 
       setIsWorking(true);
-      setTxLink("")
+      setTxLink(null)
 
-      const nftContract = new web3.eth.Contract(ERC721ABI, address);
-      const tokens_per_mint = Number(await nftContract.methods.tokensPerMint().call());
+      const nftContract: any = type === 'erc721' ? new web3.eth.Contract(ERC721ABI, address) : new web3.eth.Contract(ERC1155ABI, address);
+      const tokens_per_mint: any = Number(await nftContract.methods.tokensPerMint().call());
       console.log(tokens_per_mint);
 
       if (amount < 1 || amount > tokens_per_mint) {
@@ -61,7 +83,7 @@ const Home: NextPage = () => {
         return;
       }
 
-      const holdCount = Number(await nftContract.methods.balanceOf(account).call());
+      const holdCount = type === 'erc721' ?Number(await nftContract.methods.balanceOf(account).call()) : Number(await nftContract.methods.balanceOf(account, tokenId).call());
       const tokens_per_person = Number(await nftContract.methods.tokensPerPerson().call());
       if (holdCount + amount > tokens_per_person) {
         toast.warn(
@@ -79,69 +101,126 @@ const Home: NextPage = () => {
 
 
       if (isPublic) {
-        nftContract.methods.mint(amount).send({ from: account, value: mintPrice * amount }, function (err: any, result: any) {
-          if (err) {
-            setIsWorking(false);
-            toast.error("Transaction Error");
+        if (type == 'erc721') {
+          nftContract.methods.mint(amount).send({ from: account, value: mintPrice * amount }, function (err: any, result: any) {
+            if (err) {
+              setIsWorking(false);
+              toast.error("Transaction Error");
 
-          }
-          if (result) {
-            setIsWorking(true);
-            toast.success("Your transaction is sent. Wait for confirmation.");
-          }
-        }).on('receipt', async function (receipt: any) {
-          console.log(receipt)
-          if (receipt.status == true) {
-            setTxLink(await blockExplorer() + receipt.transactionHash)
-            setAmount(1);
-            toast.success("You successfully minted NFT.");
-          } else {
-            toast.error("Error while mint.");
-          }
-          setIsWorking(false);
-        })
+            }
+            if (result) {
+              setIsWorking(true);
+              toast.success("Your transaction is sent. Wait for confirmation.");
+            }
+          }).on('receipt', async function (receipt: any) {
+            console.log(receipt)
+            if (receipt.status == true) {
+              setTxLink(await blockExplorer(curr) + receipt.transactionHash)
+              setAmount(1);
+              toast.success("You successfully minted NFT.");
+            } else {
+              toast.error("Error while mint.");
+            }
+            setIsWorking(false);
+          })
+        } else {
+          nftContract.methods.mint(amount, tokenId, "").send({ from: account, value: mintPrice * amount }, function (err: any, result: any) {
+            if (err) {
+              setIsWorking(false);
+              toast.error("Transaction Error");
+
+            }
+            if (result) {
+              setIsWorking(true);
+              toast.success("Your transaction is sent. Wait for confirmation.");
+            }
+          }).on('receipt', async function (receipt: any) {
+            console.log(receipt)
+            if (receipt.status == true) {
+              setTxLink(await blockExplorer(curr) + receipt.transactionHash)
+              setAmount(1);
+              toast.success("You successfully minted NFT.");
+            } else {
+              toast.error("Error while mint.");
+            }
+            setIsWorking(false);
+          })
+        }
       }
       else if (isPresale) {
-        console.log("inside");
-        var config: any = {
-          method: 'get',
-          url: baseURL+`getMerkleProof?merkle=${presaleMerkleRoot}&address=${account}`,
-          headers: {}
-        };
-        axios(config)
-          .then(function (response: any) {           
-              const proof = response.data.data;
-              if (proof.length == 0) {
-                toast.error("You are not in whitelist.");
-                setIsWorking(false);
-                return;
-              }
-              nftContract.methods.presaleMint(amount, proof).send({ from: account, value: preSalePrice * amount }, function (err: any, result: any) {
-                if (err) {
-                  setIsWorking(false);
-                  toast.error("Transaction Error");
+        if (presaleMerkleRoot != '0000000000000000000000000000000000000000000000000000000000000000') {
 
+
+          var config: any = {
+            method: 'get',
+            url: baseURL + `getMerkleProof?merkle=${presaleMerkleRoot}&address=${account}`,
+            headers: {}
+          };
+          axios(config)
+            .then(function (response: any) {
+              console.log(response,"res")
+              if (response.status == 200) {
+                const proof: any = response.data.data;
+                if (proof.length == 0) {
+                  toast.error("You are not in whitelist.");
+                  setIsWorking(false);
+                  return;
                 }
-                if (result) {
-                  setIsWorking(true);
-                  toast.success("Your transaction is sent. Wait for confirmation.");
+                if(type === 'erc721'){
+                  nftContract.methods.presaleMint(amount, proof).send({ from: account, value: preSalePrice * amount }, function (err: any, result: any) {
+                    if (err) {
+                      setIsWorking(false);
+                      toast.error("Transaction Error");
+  
+                    }
+                    if (result) {
+                      setIsWorking(true);
+                      toast.success("Your transaction is sent. Wait for confirmation.");
+                    }
+                  }).on('receipt', async function (receipt: any) {
+                    console.log(receipt)
+                    if (receipt.status == true) {
+                      setTxLink(await blockExplorer(curr) + receipt.transactionHash)
+                      setAmount(1);
+                      toast.success("You successfully minted NFT.");
+                    } else {
+                      toast.error("Error while mint.");
+                    }
+                    setIsWorking(false);
+                  })
+                }else{
+                  nftContract.methods.presaleMint(amount, tokenId, proof).send({ from: account, value: preSalePrice * amount }, function (err: any, result: any) {
+                    if (err) {
+                      setIsWorking(false);
+                      toast.error("Transaction Error");
+  
+                    }
+                    if (result) {
+                      setIsWorking(true);
+                      toast.success("Your transaction is sent. Wait for confirmation.");
+                    }
+                  }).on('receipt', async function (receipt: any) {
+                    console.log(receipt)
+                    if (receipt.status == true) {
+                      setTxLink(await blockExplorer(curr) + receipt.transactionHash)
+                      setAmount(1);
+                      toast.success("You successfully minted NFT.");
+                    } else {
+                      toast.error("Error while mint.");
+                    }
+                    setIsWorking(false);
+                  })
                 }
-              }).on('receipt', async function (receipt: any) {
-                console.log(receipt)
-                if (receipt.status == true) {
-                  setTxLink(await blockExplorer() + receipt.transactionHash)
-                  setAmount(1);
-                  toast.success("You successfully minted NFT.");
-                } else {
-                  toast.error("Error while mint.");
-                }
-                setIsWorking(false);
-              })
-            
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
+              }else{
+                toast.error("You are not in whitelist.");
+              }
+
+            })
+            .catch(function (error) {
+              console.log(error);
+            });
+
+        }
 
       }
       else {
@@ -165,8 +244,10 @@ const Home: NextPage = () => {
         return
       }
       setIsWorking(false);
+      handleCurrencyChange(curr, switchNetwork)
     })();
-  }, []);
+    
+  }, [curr]);
 
   return (
     <Layout>
@@ -184,6 +265,21 @@ const Home: NextPage = () => {
             setAmount(Number(e.target.value));
           }}
         />
+
+        {type === 'erc1155' ?
+          <TextField
+            required
+            id="input-amount"
+            label="TokenId"
+            className="w-20"
+            value={tokenId}
+            disabled={isWorking || loading}
+            type="number"
+            onChange={(e) => {
+              setTokenId(Number(e.target.value));
+            }}
+          /> : ''
+        }
         <button
           className="w-20 p-3 bg-pink-500 hover:bg-pink-700 text-white font-bold mb-10"
           onClick={mint}
