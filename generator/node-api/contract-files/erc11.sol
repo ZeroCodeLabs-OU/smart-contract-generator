@@ -102,6 +102,10 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
     /// @dev Managed by the contract
     uint256 public reserveRemaining;
 
+    uint256 public currentSupply;
+
+    mapping(address=>uint256)public userTokensNFTPublicSale;
+
     constructor() ERC1155("") {
         _preventInitialization = false;
     }
@@ -135,7 +139,8 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         paymentProvided(amount * _runtimeConfig.publicMintPrice)
     {
         require(mintingActive(), "Minting has not started yet");
-
+        require(userTokensNFTPublicSale[msg.sender] + amount <= _deploymentConfig.tokenPerPerson, "You can't buy more tokens");
+        userTokensNFTPublicSale[msg.sender] += amount;
         _mintTokens(msg.sender, id, amount, data);
     }
 
@@ -269,7 +274,8 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
     /// @dev Internal function for performing token mints
     function _mintTokens(address to, uint256 id, uint256 amount, bytes memory data) internal {
         require(amount <= _deploymentConfig.tokensPerMint, "Amount too large");       
-        require(amount <= availableSupply(), "Not enough tokens left");
+        require(currentSupply + amount <= availableSupply(),"exceeds max supply");
+        currentSupply = currentSupply + amount;
         _mint(to, id, amount, data);
     }
     
@@ -527,21 +533,4 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
     {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
-
-
-    // function setURI(string memory newuri) public{
-    //     _setURI(newuri);
-    // }
-
-    // function mint(address account, uint256 id, uint256 amount, bytes memory data)
-    //     public      
-    // {
-    //     _mint(account, id, amount, data);
-    // }
-
-    // function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
-    //     public
-    // {
-    //     _mintBatch(to, ids, amounts, data);
-    // }
 }

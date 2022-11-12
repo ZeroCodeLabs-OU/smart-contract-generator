@@ -3,6 +3,7 @@ import { WalletConnectConnector } from "@web3-react/walletconnect-connector";
 import { WalletLinkConnector } from "@web3-react/walletlink-connector";
 
 
+
 export const METAMASKBSC = new InjectedConnector({
   supportedChainIds: [97,5,80001],
 });

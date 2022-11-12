@@ -1,37 +1,27 @@
-import {useContext} from "react"
+import { useContext } from "react"
 import type { NextPage } from "next";
 import Layout from "@/components/Layout";
 import Header from "@/components/Header";
-import {
-  Checkbox,
-  FormControl,
-  FormControlLabel,
-  FormGroup,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-} from "@mui/material";
+import {Checkbox,FormControl,FormControlLabel,FormGroup,InputLabel,MenuItem,Select,TextField} from "@mui/material";
 import { DateTimePicker } from "@material-ui/pickers";
 import { useEffect, useState } from "react";
 import { useWeb3React } from "@web3-react/core";
 import { toast } from "react-toastify";
-import { IFRAME_BASE_URL, NFTPORT_API_KEY, web3, baseURL} from "@/libs/constants";
+import { IFRAME_BASE_URL, baseURL, rpcURL } from "@/libs/constants";
 import { useCSVReader } from "react-papaparse";
 import moment from "moment";
 import { IpfsUploader } from "@/components/IpfsUploader";
 import axios from 'axios';
 import BigNumber from 'bignumber.js';
-import {CurrencyContext} from "./CurrencyProvider"
+import { CurrencyContext } from "./CurrencyProvider"
 import Web3 from "web3"
 
 
 
 const Home: NextPage = () => {
-  const {handleCurrencyChange, currency} = useContext(CurrencyContext);
-  const { active, account,library } = useWeb3React();
+  const { handleCurrencyChange, currency } = useContext(CurrencyContext);
+  const { active, account, library } = useWeb3React();
   const { CSVReader } = useCSVReader();
-  const [chain, setChain] = useState<string>("binance");
   const [type, setType] = useState<string>("erc721");
   const [name, setName] = useState<string>("");
   const [symbol, setSymbol] = useState<string>("");
@@ -43,16 +33,12 @@ const Home: NextPage = () => {
   const [maxNftsPerWallet, setMaxNftsPerWallet] = useState<number>(1);
   const [ownerAddress, setOwnerAddress] = useState<string>("");
   const [treasuryAddress, setTreasuryAddress] = useState<string>("");
-  const [publicMintStartDate, setPublicMintStartDate] = useState<any>(
-    new Date()
-  );
+  const [publicMintStartDate, setPublicMintStartDate] = useState<any>(new Date());
   const [metadataUpdatable, setMetadataUpdatable] = useState<boolean>(true);
   const [baseUri, setBaseUri] = useState<string>("");
   const [prerevealed, setPrerevealed] = useState<boolean>(false);
   const [prerevealBaseUri, setPrerevealBaseUri] = useState<string>("");
-  const [presaleMintStartDate, setPresaleMintSartDate] = useState<any>(
-    new Date()
-  );
+  const [presaleMintStartDate, setPresaleMintSartDate] = useState<any>(new Date());
   const [presaleWhitelist, setPresaleWhitelist] = useState<Array<string>>([]);
   const [royaltiesShare, setRoyaltiesShare] = useState<number>(0);
   const [royaltiesAddress, setRoyaltiesAddress] = useState<string>("");
@@ -61,13 +47,7 @@ const Home: NextPage = () => {
   const [merkleRoot, setMerkleRoot] = useState<any>("0x0000000000000000000000000000000000000000000000000000000000000000");
   const [isWorking, setIsWorking] = useState<boolean>(false);
 
-  const chainsOptions = [
-    { value: 'ETH', label: 'Ethereum' },
-    { value: 'BSC', label: 'Binance' },
-    { value: 'MATIC', label: 'Polygon' }
-  ]
-
-    const copyClipboard = (e: any = null) => {
+  const copyClipboard = (e: any = null) => {
     if (e) {
       e.preventDefault();
     }
@@ -78,6 +58,32 @@ const Home: NextPage = () => {
     }
   };
 
+  const contractIntailize = async (contractaddress: any, incrementer1: any, deploy: any, run: any) => {
+    incrementer1.methods.initialize(deploy, run).send({ from: ownerAddress }, function (err: any, res: any) {
+      if (err) {
+        setIsWorking(false);
+      }
+      if (res) {
+        toast.success("Wait for transaction confirmation");
+      }
+      setIframeContent(
+        `${IFRAME_BASE_URL}/iframe/${contractaddress}?type=${type}&curr=${currency}`
+      );
+      setContractAddress(contractaddress);
+    }).on('error', function (error: any) {
+      setIsWorking(false);
+      toast.error("Contract deployed Successfully.Error while initialize the contract.");
+    }).on('receipt', function (receipt: any) {
+        if (receipt.status == true) {
+          toast.success("Contract deployed successfully.");
+        } else {
+          contractIntailize(contractaddress, incrementer1, deploy, run);
+          toast.error("Error while initalize the contract.Try Again!");
+        }
+        setIsWorking(false);
+      })
+  }
+
 
   const copyUrlToClipboard = (url: string) => {
     if (window && navigator) {
@@ -85,7 +91,8 @@ const Home: NextPage = () => {
       toast.success("Copied base image URL to clipboard!");
     }
   };
-  const switchNetwork = async (chain:any) => {
+
+  const switchNetwork = async (chain: any) => {
     try {
       const chainHex = Web3.utils.toHex(chain)
       await library.provider.request({
@@ -93,29 +100,20 @@ const Home: NextPage = () => {
         params: [{ chainId: chainHex }],
       });
     } catch (switchError) {
-     toast.warn("Please make sure you have wallet connected")
+      toast.warn("Please make sure you have wallet connected")
     }
   };
 
+  const web3: any = new Web3(Web3.givenProvider || rpcURL(currency));
+
   const deploy = async (e: any = null) => {
-    // console.log(await web3.eth.getChainId()  , await web3.eth.getChainId() == 97 )
     if (e) {
       e.preventDefault();
     }
 
-    if(account == undefined){
+    if (account == undefined) {
       toast.warn("Connect your wallet");
       return;
-    }
-
-    let web3: any;
-
-    if (currency === 'bsc') {
-      web3 = new Web3( Web3.givenProvider ||  "https://data-seed-prebsc-1-s1.binance.org:8545/");
-    } else if (currency === 'matic') {
-      web3 = new Web3( Web3.givenProvider ||  "https://matic-mumbai.chainstacklabs.com/");
-    } else {
-      web3 = new Web3( Web3.givenProvider ||   "https://goerli.infura.io/v3/321980760a974de3b28757ea69901863/");
     }
 
     if (name == "" || symbol == "") {
@@ -195,7 +193,7 @@ const Home: NextPage = () => {
         toast.warn("Please import valid whitelist.");
         return;
       }
-      if(merkleRoot == '0000000000000000000000000000000000000000000000000000000000000000'){
+      if (merkleRoot == '0000000000000000000000000000000000000000000000000000000000000000') {
         toast.warn("Please import whitelist users list.");
         return;
       }
@@ -207,78 +205,69 @@ const Home: NextPage = () => {
     }
     setContractAddress("");
     try {
-      
-      let config:any;
-      if(type == 'erc721'){
+
+      let config: any;
+      if (type == 'erc721') {
         config = {
           method: 'get',
-          url: baseURL +'erc721ByteCode?file=NFTCollection',
-          headers: { }
+          url: baseURL + 'getByteCode?file=NFTCollection',
+          headers: {}
         };
-      }else{
+      } else {
         config = {
           method: 'get',
-          url: baseURL +'erc721ByteCode?file=MyToken',
-          headers: { }
+          url: baseURL + 'getByteCode?file=MyToken',
+          headers: {}
         };
-      }  
+      }
+
+      axios(config).then(async function (response: any) {
+        const code: any = '0x' + response.data.bytecode;
+        const incrementer: any = new web3.eth.Contract(response.data.abi);
+        const publicSaleStart: any = moment.utc(publicMintStartDate).format(
+          "YYYY-MM-DDTHH:mm:00+00:00"
+        )
+        const preSaleStart: any = moment.utc(presaleMintStartDate).format(
+          "YYYY-MM-DDTHH:mm:00+00:00"
+        )
+        const gas = await web3.eth.estimateGas({to: ownerAddress,data: code});
+        const gasPrice = await web3.eth.getGasPrice();
+        const gaslimit = (gas * gasPrice) / 10 ** 18;
+        const balance = await web3.eth.getBalance(account);
       
-      axios(config)
-      .then(async function (response:any) {
-        console.log(response,"response");       
-        const code:any = '0x' + response.data.bytecode;
-        const incrementer:any = new web3.eth.Contract(response.data.abi);
-        const publicSaleStart:any = moment.utc(publicMintStartDate).format(
-          "YYYY-MM-DDTHH:mm:00+00:00"
-        )
-        const preSaleStart:any = moment.utc(presaleMintStartDate).format(
-          "YYYY-MM-DDTHH:mm:00+00:00"
-        )
-        incrementer.deploy({
-          data: code,
-          // arguments: [[name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, treasuryAddress],[baseUri, metadataUpdatable, web3.utils.toWei(mintPrice.toString(), 'ether'),"false",web3.utils.toWei(presaleMintPrice.toString(), 'ether') ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, "0x"+merkleRoot, royaltiesShare * 100, royaltiesAddress] ],
-        }).send({from:ownerAddress}, function(err:any, res:any){
-          if(err){
-            toast.error("Error while deploy the contract");
-          }
-          if(res){
-            setIsWorking(true);
-            toast.success("Your Transaction is sent. Wait For confirmation");
-          }
-        }).on('receipt', function(receipt:any){
-          console.log(receipt)
-          let contractaddress:any = receipt.contractAddress;
-          setTimeout(function(){
-            // toast.success("Contract deployed successfully");
-            let incrementer1 = new web3.eth.Contract(response.data.abi, receipt.contractAddress);
-            console.log(incrementer1);
-            let mintPriceETH = BigNumber(`${(mintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
-            let presaleMintPriceETH = BigNumber(`${(presaleMintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
-            incrementer1.methods.initialize([name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
-              [baseUri, metadataUpdatable, mintPriceETH ,"false", presaleMintPriceETH ,"false", new Date(publicSaleStart).getTime()/1000, new Date(preSaleStart).getTime()/1000  ,prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress] ).send({from:ownerAddress}, function(err1:any,resul:any){
-                if(err1){
-                  setIsWorking(false);
-                  toast.error("contract deployed Successfully.Error while initialize the contract.");
-                  setContractAddress(contractaddress);
-                }
-                if(resul){
-                  setIsWorking(false);
-                  toast.success("Contract deployed successfully");
-                  setContractAddress(contractaddress);
-                }
-              })
-              setIframeContent(
-                `${IFRAME_BASE_URL}/iframe/${contractaddress}?type=${type}&curr=${currency}`
-              );
-           
-          },2000);         
-          setName("")
-          setSymbol("")
-          setBaseUri("")
-          setMaxSupply(1);
-          setTeamReserve(0);
-          setMintPrice(0);
-        });    
+        if (balance / 10 ** 18 > gaslimit ) {
+          incrementer.deploy({data: code}).send({ from: ownerAddress }, function (err:any,res: any) {
+            if(err){
+              setIsWorking(false);
+            }
+            if (res) {
+              setIsWorking(true);
+              toast.success("Your Transaction is sent. Wait For confirmation");
+            }
+          }).on('error',function(error:any){
+            setIsWorking(false);
+            toast.error("Transaction error or is  in queue.")
+          })
+          .on('receipt', function (receipt: any) {
+            let contractaddress: any = receipt.contractAddress;
+            setTimeout(function () {
+              let incrementer1 = new web3.eth.Contract(response.data.abi, receipt.contractAddress);
+              console.log(incrementer1);
+              let mintPriceETH = BigNumber(`${(mintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
+              let presaleMintPriceETH = BigNumber(`${(presaleMintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
+              contractIntailize(contractaddress, incrementer1, [name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
+                [baseUri, metadataUpdatable, mintPriceETH, "false", presaleMintPriceETH, "false", new Date(publicSaleStart).getTime() / 1000, new Date(preSaleStart).getTime() / 1000, prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress])
+            }, 2000);
+            setName("")
+            setSymbol("")
+            setBaseUri("")
+            setMaxSupply(1);
+            setTeamReserve(0);
+            setMintPrice(0);
+          });
+        } else {
+          toast.error("Insufficient Funds")
+        }
       })
     } catch (e) {
       console.log(e);
@@ -286,10 +275,6 @@ const Home: NextPage = () => {
     }
     setIsWorking(false);
   };
-
-
-
-  
 
   useEffect(() => {
     if (active) {
@@ -320,7 +305,7 @@ const Home: NextPage = () => {
               }}
             >
               <MenuItem value="bsc">Binance</MenuItem>
-              <MenuItem value="matic">Polygon</MenuItem> 
+              <MenuItem value="matic">Polygon</MenuItem>
               <MenuItem value="eth">Ethereum</MenuItem>
             </Select>
           </FormControl>
@@ -461,16 +446,8 @@ const Home: NextPage = () => {
               label="Public Mint Start Date"
               inputVariant="outlined"
               value={publicMintStartDate}
-              // format=" DD.MM.YYYY hh:mm"
               onChange={setPublicMintStartDate}
             />
-            {/* <TextField
-              required
-              label="Public Mint Start Date"
-              inputVariant="outlined"
-              value={publicMintStartDate}
-              onChange={setPublicMintStartDate}
-            /> */}
           </FormControl>
           <FormGroup>
             <FormControlLabel
@@ -567,7 +544,7 @@ const Home: NextPage = () => {
             />
           </FormControl>
           <CSVReader
-            onUploadAccepted={async(results: any) => {
+            onUploadAccepted={async (results: any) => {
               if (results && results.data && results.data.length > 0) {
                 let whitelist = [];
                 for (let item of results.data) {
@@ -577,19 +554,19 @@ const Home: NextPage = () => {
                 }
                 setPresaleWhitelist(whitelist);
                 let address = JSON.stringify(whitelist).replace(/'/g, '"');
-                let config:any = {
-                    method: 'get',
-                    url: baseURL + 'getMerkleRoot?data='+address,
-                    headers: { }
-                };                 
+                let config: any = {
+                  method: 'get',
+                  url: baseURL + 'getMerkleRoot?data=' + address,
+                  headers: {}
+                };
                 axios(config)
-                .then(function (response) {
-                  setMerkleRoot(response['data']['data']);
-                })
-                .catch(function (error) {
-                  console.log(error);
-                });
-                
+                  .then(function (response) {
+                    setMerkleRoot(response['data']['data']);
+                  })
+                  .catch(function (error) {
+                    console.log(error);
+                  });
+
               }
             }}
           >
@@ -663,7 +640,7 @@ const Home: NextPage = () => {
                 onClick={copyClipboard}
               >
                 {iframContent}
-               </div>
+              </div>
             </>
           )}
         </div>

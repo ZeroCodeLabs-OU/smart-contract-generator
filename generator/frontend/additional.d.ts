@@ -5,5 +5,6 @@
 // see https://nextjs.org/docs/basic-features/typescript for more information.
 
 interface Window {
-    ethereum: any
+    ethereum: any,
+    location:any
 }

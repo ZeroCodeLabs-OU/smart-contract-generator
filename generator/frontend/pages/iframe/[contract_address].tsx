@@ -1,15 +1,13 @@
-import { useContext } from "react"
+import { useContext, useMemo } from "react"
 import type { NextPage } from "next";
 import Layout from "@/components/Layout";
 import Header from "@/components/Header";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useWeb3React } from "@web3-react/core";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
 import { TextField } from "@material-ui/core";
-import { web3 } from "@/libs/constants";
-import useCatchTxError from "@/hooks/useCatchTxError";
-import { ERC721ABI, ERC1155ABI, blockExplorer, baseURL } from "@/libs/constants";
+import { ERC721ABI, ERC1155ABI, blockExplorer, baseURL, rpcURL } from "@/libs/constants";
 import axios from 'axios';
 import { CurrencyContext } from "../CurrencyProvider"
 import Web3 from 'web3';
@@ -17,9 +15,8 @@ import Web3 from 'web3';
 
 const Home: NextPage = () => {
   const router = useRouter();
-  const { handleCurrencyChange, currency } = useContext(CurrencyContext);
-  const { contract_address, type, curr } = router.query;
-  const { loading } = useCatchTxError();
+  const { handleCurrencyChange } = useContext(CurrencyContext);
+  const { contract_address, type, curr } = router.query
   const { active, account, library } = useWeb3React();
   const [amount, setAmount] = useState<number>(1);
   const [txLink, setTxLink] = useState<any>(null);
@@ -30,51 +27,64 @@ const Home: NextPage = () => {
     if (e) {
       e.preventDefault();
     }
-
     if (window && navigator) {
       navigator.clipboard.writeText(txLink);
       toast.success("Copied to clipboard!");
     }
   };
 
-  const web3: any = curr === 'bsc' ? new Web3(Web3.givenProvider || "https://data-seed-prebsc-1-s1.binance.org:8545/") : curr === 'matic' ? new Web3(Web3.givenProvider || "https://matic-mumbai.chainstacklabs.com/")
-    : new Web3(Web3.givenProvider || "https://goerli.infura.io/v3/321980760a974de3b28757ea69901863/");
-
   const switchNetwork = async (chain: any) => {
     try {
-      console.log(chain,"chain")
       const chainHex = Web3.utils.toHex(chain)
       await library.provider.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: chainHex }],
       });
     } catch (switchError) {
-      //  console.log(switchError)
       toast.warn("Please make sure you have wallet connected")
     }
   };
 
+  const web3: any = new Web3(Web3.givenProvider || rpcURL(curr));
+
+  const sendCallBack:any = async(err:any,res:any)=>{
+    if (err) {
+      setIsWorking(false);
+    }
+    if (res) {
+      setIsWorking(true);
+      toast.success("Your transaction is sent. Wait for confirmation.");
+    }
+  }
+
+  const onReceipt:any = async(receipt:any)=>{
+    if (receipt.status == true) {
+      setTxLink(await blockExplorer(curr) + "/tx/"+ receipt.transactionHash)
+      setAmount(1);
+      toast.success("You successfully minted NFT.");
+    } else {
+      toast.error("Error while mint.");
+    }
+    setIsWorking(false);
+  }
 
   const mint = async () => {
     try {
+      const address: any = contract_address;
       if (!active) {
         toast.warn("Please connect wallet.");
         return;
-      }
-
-      const address: any = contract_address;
-
+      }     
       if (web3.utils.isAddress(address) == true && address.length != 42) {
         toast.warn("Contract doesn't exist in our backend.");
         return;
       }
-
       setIsWorking(true);
       setTxLink(null)
-
+      
       const nftContract: any = type === 'erc721' ? new web3.eth.Contract(ERC721ABI, address) : new web3.eth.Contract(ERC1155ABI, address);
+      
       const tokens_per_mint: any = Number(await nftContract.methods.tokensPerMint().call());
-      console.log(tokens_per_mint);
 
       if (amount < 1 || amount > tokens_per_mint) {
         toast.warn(
@@ -83,7 +93,22 @@ const Home: NextPage = () => {
         return;
       }
 
-      const holdCount = type === 'erc721' ?Number(await nftContract.methods.balanceOf(account).call()) : Number(await nftContract.methods.balanceOf(account, tokenId).call());
+      const holdCount:any = type === 'erc721' ? Number(await nftContract.methods.balanceOf(account).call()) : Number(await nftContract.methods.balanceOf(account, tokenId).call());
+      const maxSupply:any = await nftContract.methods.maxSupply().call();
+      const reserve:any  = await nftContract.methods.reserveRemaining().call();
+      let totalSupply:any;
+      if(type == 'erc721'){
+        totalSupply = await nftContract.methods.totalSupply().call();
+      }else{
+        totalSupply = await nftContract.methods.currentSupply().call();
+      }
+      if(totalSupply + amount > maxSupply - reserve){
+        toast.error(
+          `Exceeds Max Supply`
+        );
+        setIsWorking(false);
+        return;
+      }
       const tokens_per_person = Number(await nftContract.methods.tokensPerPerson().call());
       if (holdCount + amount > tokens_per_person) {
         toast.warn(
@@ -98,67 +123,36 @@ const Home: NextPage = () => {
       const mintPrice = await nftContract.methods.publicMintPrice().call();
       const preSalePrice = await nftContract.methods.presaleMintPrice().call();
       const presaleMerkleRoot = await nftContract.methods.presaleMerkleRoot().call();
-
+      const balance = await web3.eth.getBalance(account);
+      
 
       if (isPublic) {
-        if (type == 'erc721') {
-          nftContract.methods.mint(amount).send({ from: account, value: mintPrice * amount }, function (err: any, result: any) {
-            if (err) {
+        if (balance > mintPrice * amount) {
+          if (type == 'erc721') {
+            nftContract.methods.mint(amount).send({ from: account, value: mintPrice * amount }, sendCallBack).on('error', function (error: any) {
               setIsWorking(false);
-              toast.error("Transaction Error");
-
-            }
-            if (result) {
-              setIsWorking(true);
-              toast.success("Your transaction is sent. Wait for confirmation.");
-            }
-          }).on('receipt', async function (receipt: any) {
-            console.log(receipt)
-            if (receipt.status == true) {
-              setTxLink(await blockExplorer(curr) + receipt.transactionHash)
-              setAmount(1);
-              toast.success("You successfully minted NFT.");
-            } else {
-              toast.error("Error while mint.");
-            }
-            setIsWorking(false);
-          })
+              toast.error("Error while mint the NFT. Try Again!.");
+            }).on("receipt",onReceipt)
+          } else {
+            
+            nftContract.methods.mint(amount, tokenId, "0x00").send({ from: account, value: mintPrice * amount }, sendCallBack).on('error', function (error: any) {
+              setIsWorking(false);
+              toast.error("Error while mint the NFT. Try Again!.");
+            }).on('receipt', onReceipt)
+          }
         } else {
-          nftContract.methods.mint(amount, tokenId, "").send({ from: account, value: mintPrice * amount }, function (err: any, result: any) {
-            if (err) {
-              setIsWorking(false);
-              toast.error("Transaction Error");
-
-            }
-            if (result) {
-              setIsWorking(true);
-              toast.success("Your transaction is sent. Wait for confirmation.");
-            }
-          }).on('receipt', async function (receipt: any) {
-            console.log(receipt)
-            if (receipt.status == true) {
-              setTxLink(await blockExplorer(curr) + receipt.transactionHash)
-              setAmount(1);
-              toast.success("You successfully minted NFT.");
-            } else {
-              toast.error("Error while mint.");
-            }
-            setIsWorking(false);
-          })
+          toast.error("Insufficient funds");
         }
       }
       else if (isPresale) {
         if (presaleMerkleRoot != '0000000000000000000000000000000000000000000000000000000000000000') {
-
-
-          var config: any = {
+          let config: any = {
             method: 'get',
             url: baseURL + `getMerkleProof?merkle=${presaleMerkleRoot}&address=${account}`,
             headers: {}
           };
-          axios(config)
-            .then(function (response: any) {
-              console.log(response,"res")
+          axios(config).then(function (response: any) {
+              console.log(response, "res")
               if (response.status == 200) {
                 const proof: any = response.data.data;
                 if (proof.length == 0) {
@@ -166,60 +160,33 @@ const Home: NextPage = () => {
                   setIsWorking(false);
                   return;
                 }
-                if(type === 'erc721'){
-                  nftContract.methods.presaleMint(amount, proof).send({ from: account, value: preSalePrice * amount }, function (err: any, result: any) {
-                    if (err) {
+                if (balance > preSalePrice * amount) {
+                  if (type === 'erc721') {
+                    nftContract.methods.presaleMint(amount, proof).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function () {
                       setIsWorking(false);
-                      toast.error("Transaction Error");
-  
-                    }
-                    if (result) {
-                      setIsWorking(true);
-                      toast.success("Your transaction is sent. Wait for confirmation.");
-                    }
-                  }).on('receipt', async function (receipt: any) {
-                    console.log(receipt)
-                    if (receipt.status == true) {
-                      setTxLink(await blockExplorer(curr) + receipt.transactionHash)
-                      setAmount(1);
-                      toast.success("You successfully minted NFT.");
-                    } else {
-                      toast.error("Error while mint.");
-                    }
-                    setIsWorking(false);
-                  })
-                }else{
-                  nftContract.methods.presaleMint(amount, tokenId, proof).send({ from: account, value: preSalePrice * amount }, function (err: any, result: any) {
-                    if (err) {
+                      toast.error("Error while mint the NFT. Try Again!.");
+                    }).on('receipt', onReceipt)
+                  } else {
+                    
+                    nftContract.methods.presaleMint(amount, tokenId, proof).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function (error: any) {
                       setIsWorking(false);
-                      toast.error("Transaction Error");
-  
-                    }
-                    if (result) {
-                      setIsWorking(true);
-                      toast.success("Your transaction is sent. Wait for confirmation.");
-                    }
-                  }).on('receipt', async function (receipt: any) {
-                    console.log(receipt)
-                    if (receipt.status == true) {
-                      setTxLink(await blockExplorer(curr) + receipt.transactionHash)
-                      setAmount(1);
-                      toast.success("You successfully minted NFT.");
-                    } else {
-                      toast.error("Error while mint.");
-                    }
-                    setIsWorking(false);
-                  })
+                      toast.error("Error while mint the NFT. Try Again!.");
+                    }).on('receipt', onReceipt)
+                  }
+                } else {
+                  toast.error("Insufficient Funds");
                 }
-              }else{
+              } else {
                 toast.error("You are not in whitelist.");
               }
 
             })
-            .catch(function (error) {
+            .catch(function (error: any) {
               console.log(error);
             });
 
+        } else {
+          toast.warn("You are not whitelisted")
         }
 
       }
@@ -237,16 +204,16 @@ const Home: NextPage = () => {
   };
 
   useEffect(() => {
-    (async () => {
-      let address: any = contract_address;
+    if (curr !== undefined) {
+      const web3: any = new Web3(Web3.givenProvider || rpcURL(curr));
+      const address: any = contract_address;
       if (web3.utils.isAddress(address) == true && address.length != 42) {
         toast.error("Contract doesn't exist in our backend.");
         return
       }
       setIsWorking(false);
       handleCurrencyChange(curr, switchNetwork)
-    })();
-    
+    }
   }, [curr]);
 
   return (
@@ -259,7 +226,7 @@ const Home: NextPage = () => {
           label="Amount"
           className="w-20"
           value={amount}
-          disabled={isWorking || loading}
+          disabled={isWorking}
           type="number"
           onChange={(e) => {
             setAmount(Number(e.target.value));
@@ -273,7 +240,7 @@ const Home: NextPage = () => {
             label="TokenId"
             className="w-20"
             value={tokenId}
-            disabled={isWorking || loading}
+            disabled={isWorking}
             type="number"
             onChange={(e) => {
               setTokenId(Number(e.target.value));
@@ -283,7 +250,7 @@ const Home: NextPage = () => {
         <button
           className="w-20 p-3 bg-pink-500 hover:bg-pink-700 text-white font-bold mb-10"
           onClick={mint}
-          disabled={isWorking || loading}
+          disabled={isWorking}
         >
           MINT
         </button>
@@ -296,7 +263,7 @@ const Home: NextPage = () => {
           </div> : ""
       }
 
-      {(isWorking || loading) && (
+      {(isWorking) && (
         <div className="fixed left-0 top-0 w-screen h-screen bg-orange-400 bg-opacity-30 flex flex-row justify-center items-center z-50">
           <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-pink-500"></div>
         </div>

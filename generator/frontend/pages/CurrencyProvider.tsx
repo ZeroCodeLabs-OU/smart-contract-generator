@@ -15,6 +15,7 @@ function CurrencyProvider({children}:any) {
     const [currency, setCurrency] = useState<string>("eth")
 
     const handleCurrencyChange = (selectedOption:any, next:any) => {
+      console.log(selectedOption)
       setCurrency(selectedOption)
       let chainNo = selectedOption === "eth" ? 5 : selectedOption === "bsc" ? 97 : selectedOption === "matic" ? 80001 : 5 ;
       next(chainNo);
