@@ -30,6 +30,7 @@ const Home: NextPage = () => {
   const [mintPrice, setMintPrice] = useState<number>(0);
   const [presaleMintPrice, setPresaleMintPrice] = useState<number>(0);
   const [maxNftsPerTx, setMaxNftsPerTx] = useState<number>(1);
+  const [tokenQuantity, setTokenQuantity] = useState<number>(1);
   const [maxNftsPerWallet, setMaxNftsPerWallet] = useState<number>(1);
   const [ownerAddress, setOwnerAddress] = useState<string>("");
   const [treasuryAddress, setTreasuryAddress] = useState<string>("");
@@ -214,6 +215,11 @@ const Home: NextPage = () => {
           headers: {}
         };
       } else {
+        console.log(tokenQuantity,"f")
+        if(tokenQuantity <= 0){
+          toast.warn("Tokens quantity must not be zero");
+          return;
+        }
         config = {
           method: 'get',
           url: baseURL + 'getByteCode?file=MyToken',
@@ -255,8 +261,14 @@ const Home: NextPage = () => {
               console.log(incrementer1);
               let mintPriceETH = BigNumber(`${(mintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
               let presaleMintPriceETH = BigNumber(`${(presaleMintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
-              contractIntailize(contractaddress, incrementer1, [name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
-                [baseUri, metadataUpdatable, mintPriceETH, "false", presaleMintPriceETH, "false", new Date(publicSaleStart).getTime() / 1000, new Date(preSaleStart).getTime() / 1000, prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress])
+              if(type == 'erc721'){
+                contractIntailize(contractaddress, incrementer1, [name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
+                  [baseUri, metadataUpdatable, mintPriceETH, "false", presaleMintPriceETH, "false", new Date(publicSaleStart).getTime() / 1000, new Date(preSaleStart).getTime() / 1000, prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress])  
+              }else{
+                contractIntailize(contractaddress, incrementer1, [name, symbol, ownerAddress, maxSupply, tokenQuantity, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
+                  [baseUri, metadataUpdatable, mintPriceETH, "false", presaleMintPriceETH, "false", new Date(publicSaleStart).getTime() / 1000, new Date(preSaleStart).getTime() / 1000, prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress])
+          
+              }
             }, 2000);
             setName("")
             setSymbol("")
@@ -358,6 +370,18 @@ const Home: NextPage = () => {
               }}
             />
           </FormControl>
+          {type == 'erc1155'?<FormControl fullWidth>
+            <TextField
+              required
+              id="input-token-reserve"
+              label="Tokens Quantity"
+              value={tokenQuantity}
+              type="number"
+              onChange={(e) => {
+                setTokenQuantity(Number(e.target.value));
+              }}
+            />
+          </FormControl> : ''}
           <FormControl fullWidth>
             <TextField
               required

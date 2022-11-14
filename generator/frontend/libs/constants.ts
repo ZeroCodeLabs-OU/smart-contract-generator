@@ -17,6 +17,8 @@ export const WALLETS = [
 
 export const IFRAME_BASE_URL = 'http://localhost:3000';
 
+
+
 export const INFURA_PROJECT_ID = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID!;
 export const INFURA_SECRET_KEY = process.env.NEXT_PUBLIC_INFURA_SECRET_KEY!;
 
@@ -1774,38 +1776,6 @@ export const ERC1155ABI:any = [
 	},
 	{
 		"inputs": [],
-		"name": "currentSupply",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			}
-		],
-		"name": "exists",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "getInfo",
 		"outputs": [
 			{
@@ -1835,6 +1805,11 @@ export const ERC1155ABI:any = [
 							{
 								"internalType": "uint256",
 								"name": "maxSupply",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "tokenQuantity",
 								"type": "uint256"
 							},
 							{
@@ -2025,6 +2000,11 @@ export const ERC1155ABI:any = [
 					},
 					{
 						"internalType": "uint256",
+						"name": "tokenQuantity",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
 						"name": "reservedSupply",
 						"type": "uint256"
 					},
@@ -2148,6 +2128,25 @@ export const ERC1155ABI:any = [
 	{
 		"inputs": [
 			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "isTokenExist",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "address",
 				"name": "wallet",
 				"type": "address"
@@ -2216,6 +2215,25 @@ export const ERC1155ABI:any = [
 		"name": "mint",
 		"outputs": [],
 		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "mintedTokenId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -2590,6 +2608,19 @@ export const ERC1155ABI:any = [
 	},
 	{
 		"inputs": [],
+		"name": "tokenQuantity",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "tokensPerMint",
 		"outputs": [
 			{
@@ -2775,6 +2806,19 @@ export const ERC1155ABI:any = [
 			}
 		],
 		"name": "userTokensNFTPublicSale",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "viewMintedTokenLength",
 		"outputs": [
 			{
 				"internalType": "uint256",

@@ -30,7 +30,7 @@ app.use(bodyparser.json());
 // parse request to body-parser
 app.use(bodyparser.urlencoded({ extended: true }))
 
-// sslServer.listen(5550,() => console.log('RUNING SSL NODE ON AWS ON PORT 443...'));
+app.listen(5550,() => console.log('RUNING SSL NODE ON AWS ON PORT 443...'));
   
 
 const getContractSource = contractFileName => {
@@ -161,8 +161,8 @@ app.get('/getMerkleProof', async (req, res) => {
     res.status(200).send({ success: true, data: proof })
 })
 
+
 app.get('/', (req, res) => {
     res.status(200).send({ success: true, msg: "API is working" });
 });
 
-app.listen(5550, () => { console.log(`Server is running on http://localhost:${5550}`) });

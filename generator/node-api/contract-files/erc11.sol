@@ -29,6 +29,8 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         address owner;
         // The maximum number of tokens that can be minted in this collection.
         uint256 maxSupply;
+
+        uint256 tokenQuantity;
         // The number of free token mints reserved for the contract owner
         uint256 reservedSupply;
         /// The maximum number of tokens the user can mint per transaction.
@@ -102,9 +104,11 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
     /// @dev Managed by the contract
     uint256 public reserveRemaining;
 
-    uint256 public currentSupply;
-
     mapping(address=>uint256)public userTokensNFTPublicSale;
+
+    uint256[] public mintedTokenId;
+
+    mapping(uint256=>bool)public isTokenExist;
 
     constructor() ERC1155("") {
         _preventInitialization = false;
@@ -141,7 +145,16 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         require(mintingActive(), "Minting has not started yet");
         require(userTokensNFTPublicSale[msg.sender] + amount <= _deploymentConfig.tokenPerPerson, "You can't buy more tokens");
         userTokensNFTPublicSale[msg.sender] += amount;
-        _mintTokens(msg.sender, id, amount, data);
+        require(totalSupply(id) + amount <= _deploymentConfig.tokenQuantity, "Token Id limit Exceeds");
+        if(isTokenExist[id] == true){
+           _mintTokens(msg.sender, id, amount, data);
+        }else{
+            require(mintedTokenId.length < availableSupply(),"Max limit exceeds");   
+            mintedTokenId.push(id);
+            isTokenExist[id]=true;
+            _mintTokens(msg.sender, id, amount, data);
+        }
+        
     }
 
     /// Mint tokens if the wallet has been whitelisted
@@ -157,7 +170,14 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         );
 
         _presaleMinted[msg.sender] = true;
-        _mintTokens(msg.sender, id, amount, "");
+        if(isTokenExist[id] == true){
+           _mintTokens(msg.sender, id, amount, "");
+        }else{
+            require(mintedTokenId.length < availableSupply(),"Max limit exceeds");   
+            mintedTokenId.push(id);
+            isTokenExist[id]=true;
+            _mintTokens(msg.sender, id, amount, "");
+        }
     }
 
 
@@ -234,7 +254,15 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
     {
         require(amount <= reserveRemaining, "Not enough reserved");
         reserveRemaining -= amount;
-        _mintTokens(to, id ,amount, "");
+        if(isTokenExist[id] == true){
+           _mintTokens(to, id ,amount, "");
+        }else{
+            require(mintedTokenId.length < _deploymentConfig.maxSupply,"Max limit exceeds");   
+            mintedTokenId.push(id);
+            isTokenExist[id]=true;
+            _mintTokens(to, id ,amount, "");
+        }
+       
     }
 
     /// Get full contract information
@@ -273,10 +301,12 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
 
     /// @dev Internal function for performing token mints
     function _mintTokens(address to, uint256 id, uint256 amount, bytes memory data) internal {
-        require(amount <= _deploymentConfig.tokensPerMint, "Amount too large");       
-        require(currentSupply + amount <= availableSupply(),"exceeds max supply");
-        currentSupply = currentSupply + amount;
-        _mint(to, id, amount, data);
+        require(amount <= _deploymentConfig.tokensPerMint, "Amount too large");
+        _mint(to, id, amount, data);      
+    }
+
+    function viewMintedTokenLength() public view returns(uint256){
+        return mintedTokenId.length;
     }
     
     /// Validate deployment config
@@ -394,9 +424,6 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
             ERC2981.supportsInterface(interfaceId);
     }
 
-    function _exists(uint256 tokenId) internal view returns (bool) {
-        return tokenId < _deploymentConfig.maxSupply;
-    }
 
     /// Get the token metadata URI
     function uri(uint256 tokenId)
@@ -405,7 +432,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         override
         returns (string memory)
     {
-        require(_exists(tokenId), "Token does not exist");
+        require(isTokenExist[tokenId], "Token does not exist");
 
         return
             bytes(_runtimeConfig.baseURI).length > 0
@@ -477,6 +504,10 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
 
     function maxSupply() public view returns (uint256) {
         return _deploymentConfig.maxSupply;
+    }
+
+    function tokenQuantity() public view returns (uint256){
+        return _deploymentConfig.tokenQuantity;
     }
 
     function reservedSupply() public view returns (uint256) {

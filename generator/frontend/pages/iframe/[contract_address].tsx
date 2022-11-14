@@ -69,7 +69,7 @@ const Home: NextPage = () => {
   }
 
   const mint = async () => {
-    try {
+    // try {
       const address: any = contract_address;
       if (!active) {
         toast.warn("Please connect wallet.");
@@ -93,22 +93,41 @@ const Home: NextPage = () => {
         return;
       }
 
+     
+
       const holdCount:any = type === 'erc721' ? Number(await nftContract.methods.balanceOf(account).call()) : Number(await nftContract.methods.balanceOf(account, tokenId).call());
+      if(type == 'erc1155'){
+        const tokenIdSupply:any = await nftContract.methods.totalSupply(tokenId).call();
+        const tokenQuantity : any = await nftContract.methods.tokenQuantity().call();
+        if(tokenIdSupply  > tokenQuantity){
+          toast.warn("Token Id limit exceeds")
+          return;
+        }
+      }
       const maxSupply:any = await nftContract.methods.maxSupply().call();
       const reserve:any  = await nftContract.methods.reserveRemaining().call();
-      let totalSupply:any;
+      
       if(type == 'erc721'){
-        totalSupply = await nftContract.methods.totalSupply().call();
+        let totalSupply:any = await nftContract.methods.totalSupply().call();
+        if(totalSupply + amount > maxSupply - reserve){
+          toast.error(
+            `Exceeds Max Supply`
+          );
+          setIsWorking(false);
+          return;
+        }
       }else{
-        totalSupply = await nftContract.methods.currentSupply().call();
+        let mintedTokens = await nftContract.methods.viewMintedTokenLength().call();
+        console.log(mintedTokens,maxSupply,reserve, mintedTokens <= maxSupply - reserve,"gh")
+        if(mintedTokens >= maxSupply - reserve){
+          toast.error(
+            `Exceeds Max Supply`
+          );
+          setIsWorking(false);
+          return;
+        }
       }
-      if(totalSupply + amount > maxSupply - reserve){
-        toast.error(
-          `Exceeds Max Supply`
-        );
-        setIsWorking(false);
-        return;
-      }
+      
       const tokens_per_person = Number(await nftContract.methods.tokensPerPerson().call());
       if (holdCount + amount > tokens_per_person) {
         toast.warn(
@@ -196,11 +215,11 @@ const Home: NextPage = () => {
         return;
       }
 
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setIsWorking(false);
-    }
+    // } catch (e) {
+    //   console.log(e);
+    // } finally {
+    //   setIsWorking(false);
+    // }
   };
 
   useEffect(() => {
