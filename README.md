@@ -1,10 +1,10 @@
 # BETA
 
 ## smart-contract-generator
-This repository contains a client which you can use to deploy NFT collections. [Zero-Code.io](https://zero-code.io). The following description showcase the enabled Smart-Contract features. 
+This repository contains a demo client that you can use to deploy your NFT collections. 
 
 ## Why are we building this feature?
-We want to help you setting your Smart Contract, deploying your NFTs collections to the blockchain, and trade it on public marketplaces
+We want to help you setting your Smart Contract, deploying your NFTs collections to the blockchain, and trade it on public marketplaces with just a few clicks. 
 
 ## How to use it? 
 Check out the Zero-Code [Smart-Contract Generator docs](https://docs.zero-code.io/product-tour/smart-contract-generator)
