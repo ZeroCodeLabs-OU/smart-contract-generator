@@ -9,7 +9,7 @@ We want to help you setting your Smart Contract, deploying your NFTs collections
 ## How to use it? 
 Check out the Zero-Code [Smart-Contract Generator docs](https://docs.zero-code.io/product-tour/smart-contract-generator)
 
-##How to launch it? 
+## How to launch it? 
 
 ```
 # clone the repository
