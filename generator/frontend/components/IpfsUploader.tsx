@@ -7,6 +7,7 @@ import { Button, FormControl } from "@mui/material";
 const auth =
   "Basic " +
   Buffer.from(INFURA_PROJECT_ID + ":" + INFURA_SECRET_KEY).toString("base64");
+console.log(auth)
 
 const ipfs = ipfsHttpClient({
   host: "ipfs.infura.io",

@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const https = require('https');
 const fs = require('fs-extra');
-// const solc = require('solc');
+const solc = require('solc');
 const cors = require('cors');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require("keccak256");
@@ -31,7 +31,6 @@ app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }))
 
 app.listen(5550,() => console.log('RUNING SSL NODE ON AWS ON PORT 443...'));
-  
 
 const getContractSource = contractFileName => {
     const contractPath = path.resolve(__dirname, 'contracts', contractFileName);
@@ -127,7 +126,7 @@ async function compile(){
         console.log('\nBuild failed\n');
     }
 };
-// compile();
+compile();
 
 app.get('/getByteCode', async(req,res)=>{
     let fileName = req.query.file;

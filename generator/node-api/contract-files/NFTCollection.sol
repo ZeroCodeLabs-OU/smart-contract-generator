@@ -400,23 +400,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
             ERC2981.supportsInterface(interfaceId);
     }
 
-    /// Get the token metadata URI
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
-        require(_exists(tokenId), "Token does not exist");
-
-        return
-            bytes(_runtimeConfig.baseURI).length > 0
-                ? string(
-                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString())
-                )
-                : _runtimeConfig.prerevealTokenURI;
-    }
-
     /// @dev Need name() to support setting it in the initializer instead of constructor
     function name() public view override returns (string memory) {
         return _deploymentConfig.name;
@@ -514,7 +497,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         return _runtimeConfig.presaleMerkleRoot;
     }
 
-    function baseURI() public view returns (string memory) {
+    function baseURI() public view virtual override returns (string memory) {
         return _runtimeConfig.baseURI;
     }
 
