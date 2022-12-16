@@ -20,11 +20,9 @@ const ipfs = ipfsHttpClient({
 
 export const IpfsUploader = ({
   label,
-  acceptType,
   setUrl,
 }: {
   label: string;
-  acceptType: string;
   setUrl: any;
 }) => {
   const [files, setFiles] = useState<FileList | Array<any> | null>([]);
@@ -56,6 +54,7 @@ export const IpfsUploader = ({
     const length = results.length;
     // @ts-ignore
     const FilesHash = results[length - 1].cid._baseCache.get("z");
+    console.log(FilesHash)
     const FilesUrl = "https://infura-ipfs.io/ipfs/" + FilesHash + "/";
     setUrl(FilesUrl);
     setFilesUrl(FilesUrl);
@@ -109,7 +108,6 @@ export const IpfsUploader = ({
             <input
               required
               type="file"
-              accept={acceptType}
               multiple
               onChange={(e) => setFiles(e.target.files)}
               hidden

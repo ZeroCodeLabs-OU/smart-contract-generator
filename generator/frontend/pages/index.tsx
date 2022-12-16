@@ -509,12 +509,10 @@ const Home: NextPage = () => {
               <div className="w-full flex flex-row justify-center items-start space-x-2">
                 <IpfsUploader
                   label="Image"
-                  acceptType="image/*"
                   setUrl={copyUrlToClipboard}
                 />
                 <IpfsUploader
                   label="Json"
-                  acceptType=".json"
                   setUrl={setPrerevealBaseUri}
                 />
               </div>
@@ -535,12 +533,10 @@ const Home: NextPage = () => {
               <div className="w-full flex flex-row justify-center items-start space-x-2">
                 <IpfsUploader
                   label="Image"
-                  acceptType="image/*"
                   setUrl={copyUrlToClipboard}
                 />
                 <IpfsUploader
                   label="Json"
-                  acceptType=".json"
                   setUrl={setBaseUri}
                 />
               </div>
