@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./ECDSA.sol";
 import "./ERC721A.sol";
 import "./Address.sol";
 import "./Strings.sol";
@@ -140,21 +141,26 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
 
         _mintTokens(msg.sender, amount);
     }
+    mapping(bytes => bool) public signatureUsed;
+
 
     /// Mint tokens if the wallet has been whitelisted
-    function presaleMint(uint256 amount, bytes32[] calldata proof)
+    function presaleMint(uint256 amount, bytes32 hash, bytes memory signature)
         external
         payable
         paymentProvided(amount * _runtimeConfig.presaleMintPrice)
     {
         require(presaleActive(), "Presale has not started yet");
-        require(
-            isWhitelisted(msg.sender, proof),
-            "Not whitelisted for presale"
-        );
+         
+        require(recoverSigner(hash, signature) == owner(), "Address is not allowlisted");
+        require(!signatureUsed[signature], "Signature has already been used.");
+
+            
+        
 
         _presaleMinted[msg.sender] = true;
         _mintTokens(msg.sender, amount);
+        signatureUsed[signature] = true;
     }
 
     /******************
@@ -183,18 +189,23 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
     }
 
     /// Check if the wallet is whitelisted for the presale
-    function isWhitelisted(address wallet, bytes32[] calldata proof)
-        public
-        view
-        returns (bool)
-    {
-        require(!_presaleMinted[wallet], "Already minted");
+    // function isWhitelisted(address wallet, bytes32[] calldata proof)
+    //     public
+    //     view
+    //     returns (bool)
+    // {
+    //     require(!_presaleMinted[wallet], "Already minted");
 
-        bytes32 leaf = keccak256(abi.encodePacked(wallet));
+    //     bytes32 leaf = keccak256(abi.encodePacked(wallet));
 
-        return
-            MerkleProof.verify(proof, _runtimeConfig.presaleMerkleRoot, leaf);
+    //     return
+    //         MerkleProof.verify(proof, _runtimeConfig.presaleMerkleRoot, leaf);
+    // }
+     function recoverSigner(bytes32 hash, bytes memory signature) public pure returns (address) {
+        bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        return ECDSA.recover(messageDigest, signature);
     }
+
 
     /// Contract owner address
     /// @dev Required for easy integration with OpenSea
