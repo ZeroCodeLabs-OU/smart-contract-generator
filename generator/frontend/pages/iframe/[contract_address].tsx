@@ -11,6 +11,8 @@ import { ERC721ABI, ERC1155ABI, blockExplorer, baseURL, rpcURL } from "@/libs/co
 import axios from 'axios';
 import { CurrencyContext } from "../CurrencyProvider"
 import Web3 from 'web3';
+const {ethers,BigNumber}=require('ethers');
+// require('dotenv').configure()
 
 
 const Home: NextPage = () => {
@@ -67,7 +69,58 @@ const Home: NextPage = () => {
     }
     setIsWorking(false);
   }
+  
+  const address: any = contract_address;
+  const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/641feefe9682428ab1e3c5bcabee9ad8');
+  async function showTransactionFees() {
+  
+const nftContract: any = type === 'erc721' ? new web3.eth.Contract(ERC721ABI, address) : new web3.eth.Contract(ERC1155ABI, address);
+const wethContract = new ethers.Contract(address,ERC721ABI,provider);
+    const gas=await wethContract.estimateGas.mint(ethers.utils.parseEther('1'))
+  //  const gas = await web3.eth.estimateGas(tx);
+  console.log(`Estimated gas: ${gas}`);
 
+  // Calculate the gas price (in wei) based on the current market rate
+  const gasPrice = await web3.eth.getGasPrice();
+  console.log(`Current gas price: ${gasPrice} wei`);
+
+  // Calculate the total fee for the transaction (in wei)
+  const fee = gas * gasPrice;
+  console.log(`Total fee for the transaction: ${fee} wei`);
+
+  // Convert the fee to ether for display on the website
+  const feeInEther =await  web3.utils.fromWei(fee.toString(), 'ether');
+  console.log(`Total fee for the transaction: ${feeInEther} ETH`);
+
+  
+  
+  const totalFeesElement = document.getElementById('total-fees');
+  
+  if (totalFeesElement) {
+    totalFeesElement.innerHTML = `Gas fee : ${feeInEther} ETH`;
+  }
+  const maxSupply:any = await nftContract.methods.maxSupply().call();
+  
+  let totalSupply:any = await nftContract.methods.totalSupply().call();
+  const publicMintPrice:any  = await nftContract.methods.publicMintPrice().call();
+  
+  const  publicMintPriceInEth=await  web3.utils.fromWei(publicMintPrice.toString(), 'ether');
+  
+  let remainNFT=maxSupply - totalSupply;
+  
+
+  const remainingNFT = document.getElementById('RemainingNFT');
+  
+  if (remainingNFT) {
+    remainingNFT.innerHTML = `Remaining NFT : ${remainNFT}`;
+  }
+  const PublicMintPrice = document.getElementById('publicMintPrice');
+  
+  if (PublicMintPrice) {
+    PublicMintPrice.innerHTML = `Public Mint Price: ${publicMintPriceInEth} ETH`; 
+  }
+
+}
   const mint = async () => {
     // try {
       const address: any = contract_address;
@@ -106,6 +159,7 @@ const Home: NextPage = () => {
       }
       const maxSupply:any = await nftContract.methods.maxSupply().call();
       const reserve:any  = await nftContract.methods.reserveRemaining().call();
+      console.log(maxSupply - reserve);
       
       if(type == 'erc721'){
         let totalSupply:any = await nftContract.methods.totalSupply().call();
@@ -270,10 +324,28 @@ const Home: NextPage = () => {
           className="w-20 p-3 bg-pink-500 hover:bg-pink-700 text-white font-bold mb-10"
           onClick={mint}
           disabled={isWorking}
+          
         >
           MINT
+
         </button>
       </div>
+      <div className="w-full h-full flex flex-col justify-center items-center space-y-5 py-10">
+      <button
+          
+          className="w-20 p-3 bg-pink-500 hover:bg-pink-700 text-white font-bold mb-10"
+          onClick={showTransactionFees}
+          disabled={isWorking}
+        >
+          SHOW INFO
+        </button>
+        
+        <div id ='total-fees'></div>
+        <div id='RemainingNFT'></div>
+        <div id='publicMintPrice' text-align='center'></div>
+        
+      </div>
+
       {
         txLink != null ?
 
@@ -282,6 +354,7 @@ const Home: NextPage = () => {
           </div> : ""
       }
 
+  
       {(isWorking) && (
         <div className="fixed left-0 top-0 w-screen h-screen bg-orange-400 bg-opacity-30 flex flex-row justify-center items-center z-50">
           <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-pink-500"></div>
