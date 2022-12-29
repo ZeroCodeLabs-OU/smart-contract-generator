@@ -78,7 +78,7 @@ const nftContract: any = type === 'erc721' ? new web3.eth.Contract(ERC721ABI, ad
 const wethContract = new ethers.Contract(address,ERC721ABI,provider);
     const gas=await wethContract.estimateGas.mint(ethers.utils.parseEther('1'))
   //  const gas = await web3.eth.estimateGas(tx);
-  console.log(`Estimated gas: ${gas}`);
+  // console.log(`Estimated gas: ${gas}`);
 
   // Calculate the gas price (in wei) based on the current market rate
   const gasPrice = await web3.eth.getGasPrice();
@@ -86,11 +86,11 @@ const wethContract = new ethers.Contract(address,ERC721ABI,provider);
 
   // Calculate the total fee for the transaction (in wei)
   const fee = gas * gasPrice;
-  console.log(`Total fee for the transaction: ${fee} wei`);
+  // console.log(`Total fee for the transaction: ${fee} wei`);
 
   // Convert the fee to ether for display on the website
   const feeInEther =await  web3.utils.fromWei(fee.toString(), 'ether');
-  console.log(`Total fee for the transaction: ${feeInEther} ETH`);
+  // console.log(`Total fee for the transaction: ${feeInEther} ETH`);
 
   
   
@@ -108,6 +108,12 @@ const wethContract = new ethers.Contract(address,ERC721ABI,provider);
   
   let remainNFT=maxSupply - totalSupply;
   
+  
+
+  let totalAmount=document.getElementById('totalAmount');
+  if(totalAmount){
+    totalAmount.innerHTML=`Total Amount: ${amount *publicMintPriceInEth}`;
+  }
 
   const remainingNFT = document.getElementById('RemainingNFT');
   
@@ -339,7 +345,7 @@ const wethContract = new ethers.Contract(address,ERC721ABI,provider);
         >
           SHOW INFO
         </button>
-        
+        <div id ='totalAmount'></div>
         <div id ='total-fees'></div>
         <div id='RemainingNFT'></div>
         <div id='publicMintPrice' text-align='center'></div>
