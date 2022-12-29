@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-
+import "./ECDSA.sol";
 import "./ERC721A.sol";
 import "./Address.sol";
 import "./Strings.sol";
 import "./AccessControl.sol";
 import "./Initializable.sol";
-import "./MerkleProof.sol";
 
 import "./ERC2981.sol";
 import "./Base64.sol";
@@ -14,7 +13,7 @@ import "./Base64.sol";
 contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
     using Address for address payable;
     using Strings for uint256;
-
+     mapping(bytes => bool) public signatureUsed;
     /// Fixed at deployment time
     struct DeploymentConfig {
         // Name of the NFT contract.
@@ -90,11 +89,11 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
     uint256 public constant VERSION = 1_03_00;
 
     /// Admin role
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 private constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     // Basis for calculating royalties.
     // This has to be 10k for royaltiesBps to be in basis points.
-    uint16 public constant ROYALTIES_BASIS = 10000;
+    uint16 private constant ROYALTIES_BASIS = 10000;
 
     /// The number of tokens remaining in the reserve
     /// @dev Managed by the contract
@@ -112,7 +111,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
     function initialize(
         DeploymentConfig memory deploymentConfig,
         RuntimeConfig memory runtimeConfig
-    ) public initializer {
+    ) private initializer {
         require(!_preventInitialization, "Cannot be initialized");
         _validateDeploymentConfig(deploymentConfig);
 
@@ -137,21 +136,25 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         paymentProvided(amount * _runtimeConfig.publicMintPrice)
     {
         require(mintingActive(), "Minting has not started yet");
-
+        
         _mintTokens(msg.sender, amount);
     }
 
+    //digital signature function
+    function recoverSigner(bytes32 hash, bytes memory signature) public pure returns (address) {
+        bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        return ECDSA.recover(messageDigest, signature);
+    }
+
     /// Mint tokens if the wallet has been whitelisted
-    function presaleMint(uint256 amount, bytes32[] calldata proof)
+    function presaleMint(uint256 amount,bytes32 hash, bytes memory signature)
         external
         payable
         paymentProvided(amount * _runtimeConfig.presaleMintPrice)
     {
         require(presaleActive(), "Presale has not started yet");
-        require(
-            isWhitelisted(msg.sender, proof),
-            "Not whitelisted for presale"
-        );
+        require(recoverSigner(hash, signature) == owner(), "Address is not allowlisted");
+        require(!signatureUsed[signature], "Signature has already been used.");
 
         _presaleMinted[msg.sender] = true;
         _mintTokens(msg.sender, amount);
@@ -183,18 +186,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
     }
 
     /// Check if the wallet is whitelisted for the presale
-    function isWhitelisted(address wallet, bytes32[] calldata proof)
-        public
-        view
-        returns (bool)
-    {
-        require(!_presaleMinted[wallet], "Already minted");
-
-        bytes32 leaf = keccak256(abi.encodePacked(wallet));
-
-        return
-            MerkleProof.verify(proof, _runtimeConfig.presaleMerkleRoot, leaf);
-    }
+    
 
     /// Contract owner address
     /// @dev Required for easy integration with OpenSea
