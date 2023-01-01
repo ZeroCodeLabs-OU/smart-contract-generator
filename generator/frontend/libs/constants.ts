@@ -22,7 +22,7 @@ export const IFRAME_BASE_URL = 'http://localhost:3000';
 export const INFURA_PROJECT_ID = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID!;
 export const INFURA_SECRET_KEY = process.env.NEXT_PUBLIC_INFURA_SECRET_KEY!;
 
-export const baseURL = 'https://techyroots.com:5550/'
+export const baseURL = 'http://localhost:5550/'
 
 export const ERC721ABI:any = [
   {

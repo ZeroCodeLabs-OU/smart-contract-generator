@@ -60,7 +60,7 @@ const Home: NextPage = () => {
   };
 
   const contractIntailize = async (contractaddress: any, incrementer1: any, deploy: any, run: any) => {
-    incrementer1.methods.initialize(deploy, run).send({ from: ownerAddress }, function (err: any, res: any) {
+    incrementer1.methods.initialize(deploy, run).send({ from: account }, function (err: any, res: any) {
       if (err) {
         setIsWorking(false);
       }
@@ -236,13 +236,13 @@ const Home: NextPage = () => {
         const preSaleStart: any = moment.utc(presaleMintStartDate).format(
           "YYYY-MM-DDTHH:mm:00+00:00"
         )
-        const gas = await web3.eth.estimateGas({to: ownerAddress,data: code});
+        const gas = await web3.eth.estimateGas({from: account,data: code});
         const gasPrice = await web3.eth.getGasPrice();
         const gaslimit = (gas * gasPrice) / 10 ** 18;
         const balance = await web3.eth.getBalance(account);
       
         if (balance / 10 ** 18 > gaslimit ) {
-          incrementer.deploy({data: code}).send({ from: ownerAddress }, function (err:any,res: any) {
+          incrementer.deploy({data: code}).send({ from: account }, function (err:any,res: any) {
             if(err){
               setIsWorking(false);
             }
