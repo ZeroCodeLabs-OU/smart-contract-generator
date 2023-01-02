@@ -116,7 +116,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         require(!_preventInitialization, "Cannot be initialized");
         _validateDeploymentConfig(deploymentConfig);
 
-        _grantRole(ADMIN_ROLE, msg.sender);
         _transferOwnership(deploymentConfig.owner);
 
         _deploymentConfig = deploymentConfig;
@@ -139,6 +138,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         require(mintingActive(), "Minting has not started yet");
 
         _mintTokens(msg.sender, amount);
+        _deploymentConfig.treasuryAddress.sendValue(msg.value);
     }
 
     /// Mint tokens if the wallet has been whitelisted
@@ -155,6 +155,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
 
         _presaleMinted[msg.sender] = true;
         _mintTokens(msg.sender, amount);
+        _deploymentConfig.treasuryAddress.sendValue(msg.value);
     }
 
     /******************
@@ -257,11 +258,13 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         _runtimeConfig = newConfig;
     }
 
+
+
     /// Withdraw minting fees to the treasury address
     /// @dev Callable by admin roles only
-    function withdrawFees() external onlyRole(ADMIN_ROLE) {
-        _deploymentConfig.treasuryAddress.sendValue(address(this).balance);
-    }
+    // function withdrawFees() external onlyRole(ADMIN_ROLE) {
+    //     _deploymentConfig.treasuryAddress.sendValue(address(this).balance);
+    // }
 
     /*************
      * Internals *
@@ -372,6 +375,12 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
                 keccak256(abi.encodePacked(config.baseURI)),
             "Metadata is frozen"
         );
+    }
+
+    // Checks if metadata has already been revealed and changes baseURI if it wasn't
+    function reveal(string memory _baseURI) public onlyRole(ADMIN_ROLE) {
+        require(bytes(_runtimeConfig.baseURI).length ==0, "Metadata already revealed");
+        _runtimeConfig.baseURI = _baseURI;
     }
 
     /// Internal function without any checks for performing the ownership transfer

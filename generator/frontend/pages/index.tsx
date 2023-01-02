@@ -47,7 +47,9 @@ const Home: NextPage = () => {
   const [iframContent, setIframeContent] = useState<string>("");
   const [merkleRoot, setMerkleRoot] = useState<any>("0x0000000000000000000000000000000000000000000000000000000000000000");
   const [isWorking, setIsWorking] = useState<boolean>(false);
-
+  const [tokenQuantityArray, setTokenQuantityArray] = useState<number[]>([]);
+  const [currentId, setCurrentId] = useState<number>(0)
+  const [defaultQuantity, setDefaultQuantity] = useState<number>(1)
   const copyClipboard = (e: any = null) => {
     if (e) {
       e.preventDefault();
@@ -58,7 +60,12 @@ const Home: NextPage = () => {
       toast.success("Copied to clipboard!");
     }
   };
-
+  useEffect(()=>{
+    if(maxSupply!=0 && defaultQuantity!=0) {
+      setTokenQuantityArray(Array.from(Array(maxSupply).fill(defaultQuantity)))
+    }
+  },[maxSupply, defaultQuantity])
+  console.log(tokenQuantityArray);
   const contractIntailize = async (contractaddress: any, incrementer1: any, deploy: any, run: any) => {
     incrementer1.methods.initialize(deploy, run).send({ from: account }, function (err: any, res: any) {
       if (err) {
@@ -265,7 +272,7 @@ const Home: NextPage = () => {
                 contractIntailize(contractaddress, incrementer1, [name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
                   [baseUri, metadataUpdatable, mintPriceETH, "false", presaleMintPriceETH, "false", new Date(publicSaleStart).getTime() / 1000, new Date(preSaleStart).getTime() / 1000, prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress])  
               }else{
-                contractIntailize(contractaddress, incrementer1, [name, symbol, ownerAddress, maxSupply, tokenQuantity, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
+                contractIntailize(contractaddress, incrementer1, [name, symbol, ownerAddress, maxSupply, tokenQuantityArray, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
                   [baseUri, metadataUpdatable, mintPriceETH, "false", presaleMintPriceETH, "false", new Date(publicSaleStart).getTime() / 1000, new Date(preSaleStart).getTime() / 1000, prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress])
           
               }
@@ -370,18 +377,57 @@ const Home: NextPage = () => {
               }}
             />
           </FormControl>
-          {type == 'erc1155'?<FormControl fullWidth>
+          
+          {type == 'erc1155'?
+          <>
+            <FormControl fullWidth>
             <TextField
               required
-              id="input-token-reserve"
-              label="Tokens Quantity"
-              value={tokenQuantity}
+              id="input-team-reserve"
+              label="Default Token Quantity"
+              value={defaultQuantity}
               type="number"
               onChange={(e) => {
-                setTokenQuantity(Number(e.target.value));
+                setDefaultQuantity(Number(e.target.value));
               }}
             />
-          </FormControl> : ''}
+          </FormControl>
+            <div style={{display:'flex',justifyContent:"space-between", width:'100%'}}>
+              <FormControl >
+                <InputLabel id="select-type-label">Type</InputLabel>
+                <Select
+                  labelId="select-type-label"
+                  id="select-type"
+                  value={currentId}
+                  label="Type"
+                  onChange={(e) => {
+                    setCurrentId(Number(e.target.value));
+                  }}
+                >
+                  {tokenQuantityArray.map((el,i)=>{
+                    return (
+                      <MenuItem value={i} key={i}>ID: {i+1} Value: {el}</MenuItem>
+                    )
+                  })}
+                  
+                </Select>
+              </FormControl>
+              <TextField
+                required
+                style={{width:'40%'}}
+                id="input-token-reserve"
+                label={"Tokens Quantity for "+(currentId+1)}
+                value={tokenQuantityArray[currentId]}
+                type="number"
+                onChange={(e) => {
+                  let newTokens = [...tokenQuantityArray]; 
+                  newTokens[currentId] = Number(e.target.value)
+                  setTokenQuantityArray(newTokens);
+                }}
+              />
+            </div> 
+            </>
+            : ''}
           <FormControl fullWidth>
             <TextField
               required
@@ -584,7 +630,8 @@ const Home: NextPage = () => {
                   headers: {}
                 };
                 axios(config)
-                  .then(function (response) {
+                  .then(function (response:any) {
+                    console.log('%cindex.tsx line:588 responce.code', 'color: #007acc;', response?.code);
                     setMerkleRoot(response['data']['data']);
                   })
                   .catch(function (error) {

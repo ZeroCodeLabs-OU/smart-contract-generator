@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const https = require('https');
 const fs = require('fs-extra');
-// const solc = require('solc');
+const solc = require('solc');
 const cors = require('cors');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require("keccak256");
@@ -127,7 +127,7 @@ async function compile(){
         console.log('\nBuild failed\n');
     }
 };
-// compile();
+compile();
 
 app.get('/getByteCode', async(req,res)=>{
     let fileName = req.query.file;
@@ -151,7 +151,13 @@ app.get('/getMerkleRoot', async (req, res) => {
 app.get('/getMerkleProof', async (req, res) => {
     let merkle = req.query.merkle;
     let address = req.query.address;
-    let data = fs.readFileSync(`./whitelist/${merkle}.json`, 'utf8');   
+    let check = fs.existsSync(`./whitelist/${merkle}.json`)
+    let data;
+    if(check) {
+        data = fs.readFileSync(`./whitelist/${merkle}.json`, 'utf8');   
+    } else {
+        return res.status(400).send({ success:false, err: "NO_WHITELIST_FOUND" })
+    }
     let whitelistAddresses = JSON.parse(data);
     console.log("whitelistAddresses", whitelistAddresses)
     let leaves = whitelistAddresses.map(addr => keccak256(addr))

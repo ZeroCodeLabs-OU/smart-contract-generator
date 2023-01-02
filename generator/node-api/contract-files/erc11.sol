@@ -29,8 +29,8 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         address owner;
         // The maximum number of tokens that can be minted in this collection.
         uint256 maxSupply;
-
-        uint256 tokenQuantity;
+        // The maximum number of tokens with specific Id that can be minted, 0 index == tokenId 1
+        uint256[] tokenQuantity;
         // The number of free token mints reserved for the contract owner
         uint256 reservedSupply;
         /// The maximum number of tokens the user can mint per transaction.
@@ -120,9 +120,9 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         RuntimeConfig memory runtimeConfig
     ) public initializer {
         require(!_preventInitialization, "Cannot be initialized");
+        require(deploymentConfig.tokenQuantity.length == deploymentConfig.maxSupply, "Token quantity length must be equal to max supply");
         _validateDeploymentConfig(deploymentConfig);
 
-        _grantRole(ADMIN_ROLE, msg.sender);
         _transferOwnership(deploymentConfig.owner);
 
         _deploymentConfig = deploymentConfig;
@@ -145,7 +145,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         require(mintingActive(), "Minting has not started yet");
         require(userTokensNFTPublicSale[msg.sender] + amount <= _deploymentConfig.tokenPerPerson, "You can't buy more tokens");
         userTokensNFTPublicSale[msg.sender] += amount;
-        require(totalSupply(id) + amount <= _deploymentConfig.tokenQuantity, "Token Id limit Exceeds");
+        require(totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id-1], "Token Id limit Exceeds");
         if(isTokenExist[id] == true){
            _mintTokens(msg.sender, id, amount, data);
         }else{
@@ -154,7 +154,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
             isTokenExist[id]=true;
             _mintTokens(msg.sender, id, amount, data);
         }
-        
+        _deploymentConfig.treasuryAddress.sendValue(msg.value);
     }
 
     /// Mint tokens if the wallet has been whitelisted
@@ -178,6 +178,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
             isTokenExist[id]=true;
             _mintTokens(msg.sender, id, amount, "");
         }
+        _deploymentConfig.treasuryAddress.sendValue(msg.value);
     }
 
 
@@ -285,9 +286,9 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
 
     /// Withdraw minting fees to the treasury address
     /// @dev Callable by admin roles only
-    function withdrawFees() external onlyRole(ADMIN_ROLE) {
-        _deploymentConfig.treasuryAddress.sendValue(address(this).balance);
-    }
+    // function withdrawFees() external onlyRole(ADMIN_ROLE) {
+    //     _deploymentConfig.treasuryAddress.sendValue(address(this).balance);
+    // }
 
      /// Contract configuration
     RuntimeConfig internal _runtimeConfig;
@@ -398,6 +399,12 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         );
     }
 
+    // Checks if metadata has already been revealed and changes baseURI if it wasn't
+    function reveal(string memory _baseURI) public onlyRole(ADMIN_ROLE) {
+        require(bytes(_runtimeConfig.baseURI).length ==0, "Metadata already revealed");
+        _runtimeConfig.baseURI = _baseURI;
+    }
+
     /// Internal function without any checks for performing the ownership transfer
     function _transferOwnership(address newOwner) internal {
         address previousOwner = _deploymentConfig.owner;
@@ -506,7 +513,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         return _deploymentConfig.maxSupply;
     }
 
-    function tokenQuantity() public view returns (uint256){
+    function tokenQuantity() public view returns (uint256[] memory){
         return _deploymentConfig.tokenQuantity;
     }
 

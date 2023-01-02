@@ -69,7 +69,7 @@ const Home: NextPage = () => {
   }
 
   const mint = async () => {
-    // try {
+    try {
       const address: any = contract_address;
       if (!active) {
         toast.warn("Please connect wallet.");
@@ -215,30 +215,60 @@ const Home: NextPage = () => {
         return;
       }
 
-    // } catch (e) {
-    //   console.log(e);
-    // } finally {
-    //   setIsWorking(false);
-    // }
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsWorking(false);
+    }
   };
-
+  const isValid = async (address:string) =>{
+    try {
+      const ERC1155InterfaceId: string = "0xd9b67a26";
+      const ERC721InterfaceId: string = "0x80ac58cd";
+      const web3: any = new Web3(await rpcURL(curr));
+      console.log(rpcURL(curr));
+      if(type == 'erc721') {
+        const nft721Contract: any = new web3.eth.Contract(ERC721ABI, address) 
+        const is721 = await nft721Contract.methods.supportsInterface(ERC721InterfaceId).call()
+        console.log(is721);
+        return is721 ? "Valid 721" : false
+      }
+      if(type == 'erc1155') {
+        const nft1155Contract: any = new web3.eth.Contract(ERC1155ABI, address) 
+        const is1155 = await nft1155Contract.methods.supportsInterface(ERC1155InterfaceId).call()
+        return is1155 ? "Valid 1155" : false
+      }
+      return false
+    } catch(e:any) {
+      console.log(e);
+      return false
+    }
+    
+  }
   useEffect(() => {
     if (curr !== undefined) {
       const web3: any = new Web3(Web3.givenProvider || rpcURL(curr));
       const address: any = contract_address;
-      if (web3.utils.isAddress(address) == true && address.length != 42) {
-        toast.error("Contract doesn't exist in our backend.");
-        return
-      }
-      setIsWorking(false);
-      handleCurrencyChange(curr, switchNetwork)
+      
+      isValid(address).then((res)=>{
+        if(!res) {
+          toast.error("Contract is not valid");
+          setIsWorking(true);
+        } else {
+          console.log(res); 
+          setIsWorking(false);
+          handleCurrencyChange(curr, switchNetwork)
+        }
+      })
+      
     }
   }, [curr]);
-
+  
   return (
     <Layout>
       <Header />
       <div className="w-full h-full flex flex-col justify-center items-center space-y-5 py-10">
+        
         <TextField
           required
           id="input-amount"
