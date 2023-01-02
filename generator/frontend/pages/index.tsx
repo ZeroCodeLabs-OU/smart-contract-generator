@@ -65,7 +65,6 @@ const Home: NextPage = () => {
       setTokenQuantityArray(Array.from(Array(maxSupply).fill(defaultQuantity)))
     }
   },[maxSupply, defaultQuantity])
-  console.log(tokenQuantityArray);
   const contractIntailize = async (contractaddress: any, incrementer1: any, deploy: any, run: any) => {
     incrementer1.methods.initialize(deploy, run).send({ from: account }, function (err: any, res: any) {
       if (err) {
