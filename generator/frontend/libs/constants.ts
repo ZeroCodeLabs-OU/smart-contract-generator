@@ -2844,7 +2844,7 @@ export const rpcURL:any = async(curr:any) =>{
   }else if(curr === 'matic'){
     return 'https://matic-mumbai.chainstacklabs.com/'
   }else{
-    return 'https://goerli.infura.io/v3/62d7de656d544930adb16c024a8694bf/'
+    return 'https://eth-goerli.g.alchemy.com/v2/8h0Xth2Q0cQl_2mMlX70Zpup05p5ceT-/'
   }
 }
 
