@@ -421,7 +421,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         return
             bytes(_runtimeConfig.baseURI).length > 0
                 ? string(
-                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString())
+                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString(), ".json")
                 )
                 : _runtimeConfig.prerevealTokenURI;
     }

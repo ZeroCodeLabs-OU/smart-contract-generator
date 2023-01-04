@@ -444,7 +444,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         return
             bytes(_runtimeConfig.baseURI).length > 0
                 ? string(
-                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString())
+                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString(), ".json")
                 )
                 : _runtimeConfig.prerevealTokenURI;
     }
