@@ -30,7 +30,6 @@ const Home: NextPage = () => {
   const [mintPrice, setMintPrice] = useState<number>(0);
   const [presaleMintPrice, setPresaleMintPrice] = useState<number>(0);
   const [maxNftsPerTx, setMaxNftsPerTx] = useState<number>(1);
-  const [tokenQuantity, setTokenQuantity] = useState<number>(1);
   const [maxNftsPerWallet, setMaxNftsPerWallet] = useState<number>(1);
   const [ownerAddress, setOwnerAddress] = useState<string>("");
   const [treasuryAddress, setTreasuryAddress] = useState<string>("");
@@ -65,6 +64,7 @@ const Home: NextPage = () => {
       setTokenQuantityArray(Array.from(Array(maxSupply).fill(defaultQuantity)))
     }
   },[maxSupply, defaultQuantity])
+
   const contractIntailize = async (contractaddress: any, incrementer1: any, deploy: any, run: any) => {
     incrementer1.methods.initialize(deploy, run).send({ from: account }, function (err: any, res: any) {
       if (err) {
@@ -221,11 +221,11 @@ const Home: NextPage = () => {
           headers: {}
         };
       } else {
-        console.log(tokenQuantity,"f")
-        if(tokenQuantity <= 0){
-          toast.warn("Tokens quantity must not be zero");
-          return;
-        }
+        // console.log(tokenQuantity,"f")
+        // if(tokenQuantity <= 0){
+        //   toast.warn("Tokens quantity must not be zero");
+        //   return;
+        // }
         config = {
           method: 'get',
           url: baseURL + 'getByteCode?file=MyToken',
@@ -555,11 +555,13 @@ const Home: NextPage = () => {
                 <IpfsUploader
                   label="Image"
                   acceptType="image/*"
+                  isPrereveal={true}
                   setUrl={copyUrlToClipboard}
                 />
                 <IpfsUploader
                   label="Json"
                   acceptType=".json"
+                  isPrereveal={true}
                   setUrl={setPrerevealBaseUri}
                 />
               </div>

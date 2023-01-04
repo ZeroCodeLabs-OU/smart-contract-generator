@@ -21,10 +21,12 @@ export const IpfsUploader = ({
   label,
   acceptType,
   setUrl,
+  isPrereveal
 }: {
   label: string;
   acceptType: string;
   setUrl: any;
+  isPrereveal?:boolean
 }) => {
   const [files, setFiles] = useState<FileList | Array<any> | null>([]);
   const [filesUrl, setFilesUrl] = useState("");
@@ -40,7 +42,7 @@ export const IpfsUploader = ({
     });
 
     const results = await all(
-      ipfs.addAll(fileObjectsArray, { wrapWithDirectory: true })
+      ipfs.addAll(fileObjectsArray, { wrapWithDirectory: !isPrereveal ? true : false })
     );
 
     console.log(results);
@@ -55,7 +57,7 @@ export const IpfsUploader = ({
     const length = results.length;
     // @ts-ignore
     const FilesHash = results[length - 1].cid._baseCache.get("z");
-    const FilesUrl = "https://infura-ipfs.io/ipfs/" + FilesHash + "/";
+    const FilesUrl = "https://infura-ipfs.io/ipfs/" + FilesHash + (!isPrereveal ? "/" : "");
     setUrl(FilesUrl);
     setFilesUrl(FilesUrl);
     setLoading(false);
@@ -109,7 +111,7 @@ export const IpfsUploader = ({
               required
               type="file"
               accept={acceptType}
-              multiple
+              multiple={!isPrereveal ? true : false}
               onChange={(e) => setFiles(e.target.files)}
               hidden
             />
