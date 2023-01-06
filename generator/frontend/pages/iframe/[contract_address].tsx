@@ -147,14 +147,16 @@ const Home: NextPage = () => {
 
       if (isPublic) {
         if (balance > mintPrice * amount) {
+          const gasPrice = parseInt(await web3.eth.getGasPrice()) * (curr == "matic" ? 3 : 1);
           if (type == 'erc721') {
-            nftContract.methods.mint(amount).send({ from: account, value: mintPrice * amount }, sendCallBack).on('error', function (error: any) {
+            console.log('%c[contract_address].tsx line:152 gasPrice', 'color: #007acc;', gasPrice);
+            nftContract.methods.mint(amount).send({ from: account, value: mintPrice * amount, gasPrice: gasPrice }, sendCallBack).on('error', function (error: any) {
               setIsWorking(false);
               toast.error("Error while mint the NFT. Try Again!.");
             }).on("receipt",onReceipt)
           } else {
-            
-            nftContract.methods.mint(amount, tokenId, "0x00").send({ from: account, value: mintPrice * amount }, sendCallBack).on('error', function (error: any) {
+            console.log('%c[contract_address].tsx line:152 gasPrice', 'color: #007acc;', gasPrice);
+            nftContract.methods.mint(amount, tokenId, "0x00").send({ from: account, value: mintPrice * amount, gasPrice: gasPrice }, sendCallBack).on('error', function (error: any) {
               setIsWorking(false);
               toast.error("Error while mint the NFT. Try Again!.");
             }).on('receipt', onReceipt)
@@ -247,9 +249,7 @@ const Home: NextPage = () => {
   }
   useEffect(() => {
     if (curr !== undefined) {
-      const web3: any = new Web3(Web3.givenProvider || rpcURL(curr));
       const address: any = contract_address;
-      
       isValid(address).then((res)=>{
         if(!res) {
           toast.error("Contract is not valid");

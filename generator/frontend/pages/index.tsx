@@ -1,8 +1,17 @@
-import { useContext } from "react"
+import { useContext } from "react";
 import type { NextPage } from "next";
 import Layout from "@/components/Layout";
 import Header from "@/components/Header";
-import {Checkbox,FormControl,FormControlLabel,FormGroup,InputLabel,MenuItem,Select,TextField} from "@mui/material";
+import {
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+} from "@mui/material";
 import { DateTimePicker } from "@material-ui/pickers";
 import { useEffect, useState } from "react";
 import { useWeb3React } from "@web3-react/core";
@@ -11,12 +20,11 @@ import { IFRAME_BASE_URL, baseURL, rpcURL } from "@/libs/constants";
 import { useCSVReader } from "react-papaparse";
 import moment from "moment";
 import { IpfsUploader } from "@/components/IpfsUploader";
-import axios from 'axios';
-import BigNumber from 'bignumber.js';
-import { CurrencyContext } from "./CurrencyProvider"
-import Web3 from "web3"
-
-
+import axios from "axios";
+import BigNumber from "bignumber.js";
+import { CurrencyContext } from "./CurrencyProvider";
+import Web3 from "web3";
+import DoubleForm from "@/components/doubleForm";
 
 const Home: NextPage = () => {
   const { handleCurrencyChange, currency } = useContext(CurrencyContext);
@@ -33,22 +41,31 @@ const Home: NextPage = () => {
   const [maxNftsPerWallet, setMaxNftsPerWallet] = useState<number>(1);
   const [ownerAddress, setOwnerAddress] = useState<string>("");
   const [treasuryAddress, setTreasuryAddress] = useState<string>("");
-  const [publicMintStartDate, setPublicMintStartDate] = useState<any>(new Date());
+  const [publicMintStartDate, setPublicMintStartDate] = useState<any>(
+    new Date()
+  );
   const [metadataUpdatable, setMetadataUpdatable] = useState<boolean>(true);
   const [baseUri, setBaseUri] = useState<string>("");
   const [prerevealed, setPrerevealed] = useState<boolean>(false);
   const [prerevealBaseUri, setPrerevealBaseUri] = useState<string>("");
-  const [presaleMintStartDate, setPresaleMintSartDate] = useState<any>(new Date());
+  const [presaleMintStartDate, setPresaleMintSartDate] = useState<any>(
+    new Date()
+  );
   const [presaleWhitelist, setPresaleWhitelist] = useState<Array<string>>([]);
   const [royaltiesShare, setRoyaltiesShare] = useState<number>(0);
   const [royaltiesAddress, setRoyaltiesAddress] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string>("");
   const [iframContent, setIframeContent] = useState<string>("");
-  const [merkleRoot, setMerkleRoot] = useState<any>("0x0000000000000000000000000000000000000000000000000000000000000000");
+  const [merkleRoot, setMerkleRoot] = useState<any>(
+    "0x0000000000000000000000000000000000000000000000000000000000000000"
+  );
   const [isWorking, setIsWorking] = useState<boolean>(false);
   const [tokenQuantityArray, setTokenQuantityArray] = useState<number[]>([]);
-  const [currentId, setCurrentId] = useState<number>(0)
-  const [defaultQuantity, setDefaultQuantity] = useState<number>(1)
+  const [teamReserveArray, setTeamReserveArray] = useState<number[]>([]);
+  const [reservedIds, setReservedIds] = useState<number[]>([]);
+  const [currentId, setCurrentId] = useState<number>(0);
+  const [currentTeamId, setCurrentTeamId] = useState<number>(0);
+  const [defaultQuantity, setDefaultQuantity] = useState<number>(1);
   const copyClipboard = (e: any = null) => {
     if (e) {
       e.preventDefault();
@@ -59,38 +76,62 @@ const Home: NextPage = () => {
       toast.success("Copied to clipboard!");
     }
   };
-  useEffect(()=>{
-    if(maxSupply!=0 && defaultQuantity!=0) {
-      setTokenQuantityArray(Array.from(Array(maxSupply).fill(defaultQuantity)))
+  useEffect(() => {
+    if (maxSupply != 0 && defaultQuantity != 0) {
+      setTokenQuantityArray(Array.from(Array(maxSupply).fill(defaultQuantity)));
+      setTeamReserveArray(Array.from(Array(maxSupply).fill(0)));
     }
-  },[maxSupply, defaultQuantity])
-
-  const contractIntailize = async (contractaddress: any, incrementer1: any, deploy: any, run: any) => {
-    incrementer1.methods.initialize(deploy, run).send({ from: account }, function (err: any, res: any) {
-      if (err) {
+  }, [maxSupply, defaultQuantity]);
+  // console.log(
+  //   reservedIds,
+  //   teamReserveArray.filter((item: any) => item != 0)
+  // );
+  const contractIntailize = async (
+    contractaddress: any,
+    incrementer1: any,
+    deploy: any,
+    run: any,
+    reserved?: any
+  ) => {
+    console.log(reserved);
+    let incrm = reserved
+      ? incrementer1.methods.initialize(deploy, run, reserved)
+      : incrementer1.methods.initialize(deploy, run);
+    incrm
+      .send({ from: account }, function (err: any, res: any) {
+        if (err) {
+          setIsWorking(false);
+        }
+        if (res) {
+          toast.success("Wait for transaction confirmation");
+        }
+        setIframeContent(
+          `${IFRAME_BASE_URL}/iframe/${contractaddress}?type=${type}&curr=${currency}`
+        );
+        setContractAddress(contractaddress);
+      })
+      .on("error", function (error: any) {
         setIsWorking(false);
-      }
-      if (res) {
-        toast.success("Wait for transaction confirmation");
-      }
-      setIframeContent(
-        `${IFRAME_BASE_URL}/iframe/${contractaddress}?type=${type}&curr=${currency}`
-      );
-      setContractAddress(contractaddress);
-    }).on('error', function (error: any) {
-      setIsWorking(false);
-      toast.error("Contract deployed Successfully.Error while initialize the contract.");
-    }).on('receipt', function (receipt: any) {
+        toast.error(
+          "Contract deployed Successfully.Error while initialize the contract."
+        );
+      })
+      .on("receipt", function (receipt: any) {
         if (receipt.status == true) {
           toast.success("Contract deployed successfully.");
         } else {
-          contractIntailize(contractaddress, incrementer1, deploy, run);
+          contractIntailize(
+            contractaddress,
+            incrementer1,
+            deploy,
+            run,
+            reserved
+          );
           toast.error("Error while initalize the contract.Try Again!");
         }
         setIsWorking(false);
-      })
-  }
-
+      });
+  };
 
   const copyUrlToClipboard = (url: string) => {
     if (window && navigator) {
@@ -99,15 +140,39 @@ const Home: NextPage = () => {
     }
   };
 
+  const changeReservedArray = (val: string) => {
+    let newTokens = [...teamReserveArray];
+    newTokens[currentTeamId] = Number(val);
+    setTeamReserveArray(newTokens);
+   
+  };
+  useEffect(()=>{
+  if(teamReserveArray && teamReserveArray.length>0) {
+    let ids = teamReserveArray
+    .map((el, i) => {
+      if (el != 0) return i;
+      else return undefined;
+    })
+    .filter((el) => el != undefined);
+    //@ts-ignore
+  setReservedIds(ids);
+  }
+  },[teamReserveArray])
+  const changeTokenArray = (val: string) => {
+    let newTokens = [...tokenQuantityArray];
+    newTokens[currentId] = Number(val);
+    setTokenQuantityArray(newTokens);
+  };
+
   const switchNetwork = async (chain: any) => {
     try {
-      const chainHex = Web3.utils.toHex(chain)
+      const chainHex = Web3.utils.toHex(chain);
       await library.provider.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: chainHex }],
       });
     } catch (switchError) {
-      toast.warn("Please make sure you have wallet connected")
+      toast.warn("Please make sure you have wallet connected");
     }
   };
 
@@ -200,7 +265,10 @@ const Home: NextPage = () => {
         toast.warn("Please import valid whitelist.");
         return;
       }
-      if (merkleRoot == '0000000000000000000000000000000000000000000000000000000000000000') {
+      if (
+        merkleRoot ==
+        "0000000000000000000000000000000000000000000000000000000000000000"
+      ) {
         toast.warn("Please import whitelist users list.");
         return;
       }
@@ -212,13 +280,12 @@ const Home: NextPage = () => {
     }
     setContractAddress("");
     try {
-
       let config: any;
-      if (type == 'erc721') {
+      if (type == "erc721") {
         config = {
-          method: 'get',
-          url: baseURL + 'getByteCode?file=NFTCollection',
-          headers: {}
+          method: "get",
+          url: baseURL + "getByteCode?file=NFTCollection",
+          headers: {},
         };
       } else {
         // console.log(tokenQuantity,"f")
@@ -227,66 +294,133 @@ const Home: NextPage = () => {
         //   return;
         // }
         config = {
-          method: 'get',
-          url: baseURL + 'getByteCode?file=MyToken',
-          headers: {}
+          method: "get",
+          url: baseURL + "getByteCode?file=MyToken",
+          headers: {},
         };
       }
 
       axios(config).then(async function (response: any) {
-        const code: any = '0x' + response.data.bytecode;
+        const code: any = "0x" + response.data.bytecode;
         const incrementer: any = new web3.eth.Contract(response.data.abi);
-        const publicSaleStart: any = moment.utc(publicMintStartDate).format(
-          "YYYY-MM-DDTHH:mm:00+00:00"
-        )
-        const preSaleStart: any = moment.utc(presaleMintStartDate).format(
-          "YYYY-MM-DDTHH:mm:00+00:00"
-        )
-        const gas = await web3.eth.estimateGas({from: account,data: code});
+        const publicSaleStart: any = moment
+          .utc(publicMintStartDate)
+          .format("YYYY-MM-DDTHH:mm:00+00:00");
+        const preSaleStart: any = moment
+          .utc(presaleMintStartDate)
+          .format("YYYY-MM-DDTHH:mm:00+00:00");
+        const gas = await web3.eth.estimateGas({ from: account, data: code });
         const gasPrice = await web3.eth.getGasPrice();
         const gaslimit = (gas * gasPrice) / 10 ** 18;
         const balance = await web3.eth.getBalance(account);
-      
-        if (balance / 10 ** 18 > gaslimit ) {
-          incrementer.deploy({data: code}).send({ from: account }, function (err:any,res: any) {
-            if(err){
-              setIsWorking(false);
-            }
-            if (res) {
-              setIsWorking(true);
-              toast.success("Your Transaction is sent. Wait For confirmation");
-            }
-          }).on('error',function(error:any){
-            setIsWorking(false);
-            toast.error("Transaction error or is  in queue.")
-          })
-          .on('receipt', function (receipt: any) {
-            let contractaddress: any = receipt.contractAddress;
-            setTimeout(function () {
-              let incrementer1 = new web3.eth.Contract(response.data.abi, receipt.contractAddress);
-              console.log(incrementer1);
-              let mintPriceETH = BigNumber(`${(mintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
-              let presaleMintPriceETH = BigNumber(`${(presaleMintPrice * 10 ** Number(18)).toFixed(0)}`).toFixed();
-              if(type == 'erc721'){
-                contractIntailize(contractaddress, incrementer1, [name, symbol, ownerAddress, maxSupply, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
-                  [baseUri, metadataUpdatable, mintPriceETH, "false", presaleMintPriceETH, "false", new Date(publicSaleStart).getTime() / 1000, new Date(preSaleStart).getTime() / 1000, prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress])  
-              }else{
-                contractIntailize(contractaddress, incrementer1, [name, symbol, ownerAddress, maxSupply, tokenQuantityArray, teamReserve, maxNftsPerTx, maxNftsPerWallet, treasuryAddress],
-                  [baseUri, metadataUpdatable, mintPriceETH, "false", presaleMintPriceETH, "false", new Date(publicSaleStart).getTime() / 1000, new Date(preSaleStart).getTime() / 1000, prerevealBaseUri, merkleRoot, royaltiesShare * 100, royaltiesAddress])
-          
+
+        if (balance / 10 ** 18 > gaslimit) {
+          incrementer
+            .deploy({ data: code })
+            .send({ from: account }, function (err: any, res: any) {
+              if (err) {
+                setIsWorking(false);
               }
-            }, 2000);
-            setName("")
-            setSymbol("")
-            setBaseUri("")
-            setMaxSupply(1);
-            setTeamReserve(0);
-            setMintPrice(0);
-          });
+              if (res) {
+                setIsWorking(true);
+                toast.success(
+                  "Your Transaction is sent. Wait For confirmation"
+                );
+              }
+            })
+            .on("error", function (error: any) {
+              setIsWorking(false);
+              toast.error("Transaction error or is  in queue.");
+            })
+            .on("receipt", function (receipt: any) {
+              let contractaddress: any = receipt.contractAddress;
+              setTimeout(function () {
+                let incrementer1 = new web3.eth.Contract(
+                  response.data.abi,
+                  receipt.contractAddress
+                );
+                console.log(incrementer1);
+                let mintPriceETH = BigNumber(
+                  `${(mintPrice * 10 ** Number(18)).toFixed(0)}`
+                ).toFixed();
+                let presaleMintPriceETH = BigNumber(
+                  `${(presaleMintPrice * 10 ** Number(18)).toFixed(0)}`
+                ).toFixed();
+                if (type == "erc721") {
+                  contractIntailize(
+                    contractaddress,
+                    incrementer1,
+                    [
+                      name,
+                      symbol,
+                      ownerAddress,
+                      maxSupply,
+                      teamReserve,
+                      maxNftsPerTx,
+                      maxNftsPerWallet,
+                      treasuryAddress,
+                    ],
+                    [
+                      baseUri,
+                      metadataUpdatable,
+                      mintPriceETH,
+                      "false",
+                      presaleMintPriceETH,
+                      "false",
+                      new Date(publicSaleStart).getTime() / 1000,
+                      new Date(preSaleStart).getTime() / 1000,
+                      prerevealBaseUri,
+                      merkleRoot,
+                      royaltiesShare * 100,
+                      royaltiesAddress,
+                    ]
+                  );
+                } else {
+                  contractIntailize(
+                    contractaddress,
+                    incrementer1,
+                    [
+                      name,
+                      symbol,
+                      ownerAddress,
+                      maxSupply,
+                      tokenQuantityArray,
+                      maxNftsPerTx,
+                      maxNftsPerWallet,
+                      treasuryAddress,
+                    ],
+                    [
+                      baseUri,
+                      metadataUpdatable,
+                      mintPriceETH,
+                      "false",
+                      presaleMintPriceETH,
+                      "false",
+                      new Date(publicSaleStart).getTime() / 1000,
+                      new Date(preSaleStart).getTime() / 1000,
+                      prerevealBaseUri,
+                      merkleRoot,
+                      royaltiesShare * 100,
+                      royaltiesAddress,
+                    ],
+                    [
+                      reservedIds,
+                      teamReserveArray.filter((item: any) => item != 0),
+                    ]
+                  );
+                }
+              }, 2000);
+              setName("");
+              setSymbol("");
+              setBaseUri("");
+              setMaxSupply(1);
+              setTeamReserve(0);
+              setMintPrice(0);
+            });
         } else {
-          toast.error("Insufficient Funds")
+          toast.error("Insufficient Funds");
         }
-      })
+      });
     } catch (e) {
       console.log(e);
       toast.error("Error occured on deploying smart contract.");
@@ -319,7 +453,10 @@ const Home: NextPage = () => {
               value={currency}
               label="Chain"
               onChange={(selectedOption) => {
-                handleCurrencyChange(selectedOption.target.value, switchNetwork);
+                handleCurrencyChange(
+                  selectedOption.target.value,
+                  switchNetwork
+                );
               }}
             >
               <MenuItem value="bsc">Binance</MenuItem>
@@ -376,69 +513,54 @@ const Home: NextPage = () => {
               }}
             />
           </FormControl>
-          
-          {type == 'erc1155'?
-          <>
-            <FormControl fullWidth>
-            <TextField
-              required
-              id="input-team-reserve"
-              label="Default Token Quantity"
-              value={defaultQuantity}
-              type="number"
-              onChange={(e) => {
-                setDefaultQuantity(Number(e.target.value));
-              }}
-            />
-          </FormControl>
-            <div style={{display:'flex',justifyContent:"space-between", width:'100%'}}>
-              <FormControl >
-                <InputLabel id="select-type-label">Type</InputLabel>
-                <Select
-                  labelId="select-type-label"
-                  id="select-type"
-                  value={currentId}
-                  label="Type"
+
+          {type == "erc1155" ? (
+            <>
+              <FormControl fullWidth>
+                <TextField
+                  required
+                  id="input-team-reserve"
+                  label="Default Token Quantity"
+                  value={defaultQuantity}
+                  type="number"
                   onChange={(e) => {
-                    setCurrentId(Number(e.target.value));
+                    setDefaultQuantity(Number(e.target.value));
                   }}
-                >
-                  {tokenQuantityArray.map((el,i)=>{
-                    return (
-                      <MenuItem value={i} key={i}>ID: {i+1} Value: {el}</MenuItem>
-                    )
-                  })}
-                  
-                </Select>
+                />
               </FormControl>
-              <TextField
-                required
-                style={{width:'40%'}}
-                id="input-token-reserve"
-                label={"Tokens Quantity for "+(currentId+1)}
-                value={tokenQuantityArray[currentId]}
-                type="number"
-                onChange={(e) => {
-                  let newTokens = [...tokenQuantityArray]; 
-                  newTokens[currentId] = Number(e.target.value)
-                  setTokenQuantityArray(newTokens);
-                }}
+              <DoubleForm
+                label={"Quantity"}
+                currentId={currentId}
+                setCurrentId={setCurrentId}
+                tokenArray={tokenQuantityArray}
+                onChange={changeTokenArray}
               />
-            </div> 
+              <DoubleForm
+                label={"Team Reserve"}
+                currentId={currentTeamId}
+                setCurrentId={setCurrentTeamId}
+                tokenArray={teamReserveArray}
+                initialArray={tokenQuantityArray}
+                onChange={changeReservedArray}
+              />
             </>
-            : ''}
-          <FormControl fullWidth>
-            <TextField
-              required
-              id="input-team-reserve"
-              label="Team Reseved NFT Count"
-              value={teamReserve}
-              type="number"
-              onChange={(e) => {
-                setTeamReserve(Number(e.target.value));
-              }}
-            />
-          </FormControl>
+          ) : (
+            <>
+              <FormControl fullWidth>
+                <TextField
+                  required
+                  id="input-team-reserve"
+                  label="Team Reseved NFT Count"
+                  value={teamReserve}
+                  type="number"
+                  onChange={(e) => {
+                    setTeamReserve(Number(e.target.value));
+                  }}
+                />
+              </FormControl>
+            </>
+          )}
+
           <FormControl fullWidth>
             <TextField
               required
@@ -626,19 +748,22 @@ const Home: NextPage = () => {
                 setPresaleWhitelist(whitelist);
                 let address = JSON.stringify(whitelist).replace(/'/g, '"');
                 let config: any = {
-                  method: 'get',
-                  url: baseURL + 'getMerkleRoot?data=' + address,
-                  headers: {}
+                  method: "get",
+                  url: baseURL + "getMerkleRoot?data=" + address,
+                  headers: {},
                 };
                 axios(config)
-                  .then(function (response:any) {
-                    console.log('%cindex.tsx line:588 responce.code', 'color: #007acc;', response?.code);
-                    setMerkleRoot(response['data']['data']);
+                  .then(function (response: any) {
+                    console.log(
+                      "%cindex.tsx line:588 responce.code",
+                      "color: #007acc;",
+                      response?.code
+                    );
+                    setMerkleRoot(response["data"]["data"]);
                   })
                   .catch(function (error) {
                     console.log(error);
                   });
-
               }
             }}
           >

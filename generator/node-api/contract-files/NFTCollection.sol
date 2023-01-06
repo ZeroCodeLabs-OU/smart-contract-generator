@@ -121,7 +121,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         _deploymentConfig = deploymentConfig;
         _runtimeConfig = runtimeConfig;
 
-        reserveRemaining = deploymentConfig.reservedSupply;
+        _reserveMint(deploymentConfig.reservedSupply, deploymentConfig.owner);
         _preventInitialization = true;
     }
 
@@ -288,6 +288,11 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         _safeMint(to, amount);
     }
 
+    function _reserveMint(uint256 amount, address to) internal {
+        require(amount <= availableSupply(), "Not enough tokens left");
+        _safeMint(to, amount);
+    }
+
     /// Validate deployment config
     function _validateDeploymentConfig(DeploymentConfig memory config)
         internal
@@ -421,7 +426,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         return
             bytes(_runtimeConfig.baseURI).length > 0
                 ? string(
-                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString(), ".json")
+                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString())
                 )
                 : _runtimeConfig.prerevealTokenURI;
     }

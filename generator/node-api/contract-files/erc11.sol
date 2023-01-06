@@ -31,8 +31,6 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         uint256 maxSupply;
         // The maximum number of tokens with specific Id that can be minted, 0 index == tokenId 1
         uint256[] tokenQuantity;
-        // The number of free token mints reserved for the contract owner
-        uint256 reservedSupply;
         /// The maximum number of tokens the user can mint per transaction.
         uint256 tokensPerMint;
         /// Tokens per person
@@ -81,6 +79,11 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         RuntimeConfig runtimeConfig;
     }
 
+    struct ReservedMint {
+        uint256[] tokenIds;
+        uint256[] amounts;
+    }
+
     event OwnershipTransferred(
         address indexed previousOwner,
         address indexed newOwner
@@ -117,7 +120,8 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
     /// Contract initializer
     function initialize(
         DeploymentConfig memory deploymentConfig,
-        RuntimeConfig memory runtimeConfig
+        RuntimeConfig memory runtimeConfig,
+        ReservedMint memory reservedDetails
     ) public initializer {
         require(!_preventInitialization, "Cannot be initialized");
         require(deploymentConfig.tokenQuantity.length == deploymentConfig.maxSupply, "Token quantity length must be equal to max supply");
@@ -128,7 +132,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         _deploymentConfig = deploymentConfig;
         _runtimeConfig = runtimeConfig;
 
-        reserveRemaining = deploymentConfig.reservedSupply;
+        _reserveMint(reservedDetails, deploymentConfig.owner);
         _preventInitialization = true;
     }
 
@@ -145,7 +149,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         require(mintingActive(), "Minting has not started yet");
         require(userTokensNFTPublicSale[msg.sender] + amount <= _deploymentConfig.tokenPerPerson, "You can't buy more tokens");
         userTokensNFTPublicSale[msg.sender] += amount;
-        require(totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id-1], "Token Id limit Exceeds");
+        require(totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id], "Token Id limit Exceeds");
         if(isTokenExist[id] == true){
            _mintTokens(msg.sender, id, amount, data);
         }else{
@@ -170,10 +174,12 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         );
 
         _presaleMinted[msg.sender] = true;
+        require(totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id], "Token Id limit Exceeds");
+
         if(isTokenExist[id] == true){
            _mintTokens(msg.sender, id, amount, "");
         }else{
-            require(mintedTokenId.length < availableSupply(),"Max limit exceeds");   
+            require(mintedTokenId.length < availableSupply(), "Max limit exceeds");   
             mintedTokenId.push(id);
             isTokenExist[id]=true;
             _mintTokens(msg.sender, id, amount, "");
@@ -248,24 +254,6 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
      * Admin actions *
     *****************/
 
-    /// Mint a token from the reserve
-    function reserveMint(address to, uint256 amount, uint256 id)
-        external
-        onlyRole(ADMIN_ROLE)
-    {
-        require(amount <= reserveRemaining, "Not enough reserved");
-        reserveRemaining -= amount;
-        if(isTokenExist[id] == true){
-           _mintTokens(to, id ,amount, "");
-        }else{
-            require(mintedTokenId.length < _deploymentConfig.maxSupply,"Max limit exceeds");   
-            mintedTokenId.push(id);
-            isTokenExist[id]=true;
-            _mintTokens(to, id ,amount, "");
-        }
-       
-    }
-
     /// Get full contract information
     /// @dev Convenience helper
     function getInfo() external view returns (ContractInfo memory info) {
@@ -309,6 +297,23 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
     function viewMintedTokenLength() public view returns(uint256){
         return mintedTokenId.length;
     }
+
+    function _reserveMint(ReservedMint memory reserveDetails, address owner) internal {
+        require(reserveDetails.amounts.length == reserveDetails.tokenIds.length, "Reserve details array length must be equal");
+        for(uint256 i = 0; i < reserveDetails.amounts.length; i++) {
+            uint256 id = reserveDetails.tokenIds[i];
+            uint256 amount = reserveDetails.amounts[i];
+            require(totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id], "Token Id limit Exceeds");
+            if(isTokenExist[id] == true){
+                _mint(owner, id ,amount, "");
+            }else{
+                require(mintedTokenId.length < _deploymentConfig.maxSupply, "Max limit exceeds");   
+                mintedTokenId.push(id);
+                isTokenExist[id]=true;
+                _mint(owner, id ,amount, "");
+            }
+        }
+    }
     
     /// Validate deployment config
     function _validateDeploymentConfig(DeploymentConfig memory config)
@@ -322,10 +327,6 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
             "Treasury address cannot be null"
         );
         require(config.owner != address(0), "Contract must have an owner");
-        require(
-            config.reservedSupply <= config.maxSupply,
-            "Reserve greater than supply"
-        );
     }
 
     /// Validate a runtime configuration change
@@ -444,7 +445,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         return
             bytes(_runtimeConfig.baseURI).length > 0
                 ? string(
-                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString(), ".json")
+                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString())
                 )
                 : _runtimeConfig.prerevealTokenURI;
     }
@@ -515,10 +516,6 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
 
     function tokenQuantity() public view returns (uint256[] memory){
         return _deploymentConfig.tokenQuantity;
-    }
-
-    function reservedSupply() public view returns (uint256) {
-        return _deploymentConfig.reservedSupply;
     }
 
     function publicMintPrice() public view returns (uint256) {
