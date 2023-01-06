@@ -22,7 +22,6 @@ const Home: NextPage = () => {
   const [txLink, setTxLink] = useState<any>(null);
   const [isWorking, setIsWorking] = useState<boolean>(false);
   const [tokenId, setTokenId] = useState<number>(1);
-
   const copyClipboard = (e: any = null) => {
     if (e) {
       e.preventDefault();
