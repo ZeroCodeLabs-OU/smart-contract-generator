@@ -117,7 +117,7 @@ const Home: NextPage = () => {
           return;
         }
       }else{
-        let mintedTokens = await nftContract.methods.viewMintedTokenLength().call();
+        let mintedTokens = parseInt(await nftContract.methods.viewMintedTokenLength().call());
         console.log(mintedTokens,maxSupply,reserve, mintedTokens <= maxSupply - reserve,"gh")
         if(mintedTokens >= maxSupply - reserve){
           toast.error(
