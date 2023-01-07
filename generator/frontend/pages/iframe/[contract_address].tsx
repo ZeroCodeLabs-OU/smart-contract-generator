@@ -104,11 +104,11 @@ const Home: NextPage = () => {
           return;
         }
       }
-      const maxSupply:any = await nftContract.methods.maxSupply().call();
-      const reserve:any  = await nftContract.methods.reserveRemaining().call();
+      const maxSupply:any = parseInt(await nftContract.methods.maxSupply().call());
+      const reserve:any  = parseInt(await nftContract.methods.reserveRemaining().call());
       
       if(type == 'erc721'){
-        let totalSupply:any = await nftContract.methods.totalSupply().call();
+        let totalSupply:any = parseInt(await nftContract.methods.totalSupply().call());
         if(totalSupply + amount > maxSupply - reserve){
           toast.error(
             `Exceeds Max Supply`
