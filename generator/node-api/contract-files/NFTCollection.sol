@@ -121,7 +121,9 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         _deploymentConfig = deploymentConfig;
         _runtimeConfig = runtimeConfig;
 
-        _reserveMint(deploymentConfig.reservedSupply, deploymentConfig.owner);
+        if(deploymentConfig.reservedSupply > 0) {
+            _reserveMint(deploymentConfig.reservedSupply, deploymentConfig.owner);
+        }
         _preventInitialization = true;
     }
 
@@ -262,9 +264,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
 
     /// Withdraw minting fees to the treasury address
     /// @dev Callable by admin roles only
-    // function withdrawFees() external onlyRole(ADMIN_ROLE) {
-    //     _deploymentConfig.treasuryAddress.sendValue(address(this).balance);
-    // }
 
     /*************
      * Internals *

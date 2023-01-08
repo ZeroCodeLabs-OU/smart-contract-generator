@@ -131,8 +131,9 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
 
         _deploymentConfig = deploymentConfig;
         _runtimeConfig = runtimeConfig;
-
-        _reserveMint(reservedDetails, deploymentConfig.owner);
+        if(reservedDetails.tokenIds.length > 0) {
+            _reserveMint(reservedDetails, deploymentConfig.owner);
+        }
         _preventInitialization = true;
     }
 
@@ -271,12 +272,6 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         _validateRuntimeConfig(newConfig);
         _runtimeConfig = newConfig;
     }
-
-    /// Withdraw minting fees to the treasury address
-    /// @dev Callable by admin roles only
-    // function withdrawFees() external onlyRole(ADMIN_ROLE) {
-    //     _deploymentConfig.treasuryAddress.sendValue(address(this).balance);
-    // }
 
      /// Contract configuration
     RuntimeConfig internal _runtimeConfig;
