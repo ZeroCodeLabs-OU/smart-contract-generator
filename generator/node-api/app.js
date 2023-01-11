@@ -127,7 +127,7 @@ async function compile(){
         console.log('\nBuild failed\n');
     }
 };
-// compile();
+compile();
 
 app.get('/getByteCode', async(req,res)=>{
     let fileName = req.query.file;

@@ -7,14 +7,22 @@ import "./Strings.sol";
 import "./AccessControl.sol";
 import "./Initializable.sol";
 import "./MerkleProof.sol";
-
+import "./ECDSA.sol";
 import "./ERC2981.sol";
 import "./Base64.sol";
+import "./Counters.sol";
 
-contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
+
+
+contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
     using Address for address payable;
     using Strings for uint256;
+    mapping(bytes => bool) public signatureUsed;
+    
+    using Counters for Counters.Counter;
 
+    Counters.Counter private _tokenIds;
+    
     /// Fixed at deployment time
     struct DeploymentConfig {
         // Name of the NFT contract.
@@ -121,9 +129,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         _deploymentConfig = deploymentConfig;
         _runtimeConfig = runtimeConfig;
 
-        if(deploymentConfig.reservedSupply > 0) {
-            _reserveMint(deploymentConfig.reservedSupply, deploymentConfig.owner);
-        }
+        reserveRemaining = deploymentConfig.reservedSupply;
         _preventInitialization = true;
     }
 
@@ -143,23 +149,37 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         _deploymentConfig.treasuryAddress.sendValue(msg.value);
     }
 
+   //digital signature function
+    function recoverSigner(bytes32 hash, bytes memory signature) public pure returns (address) {
+        bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        return ECDSA.recover(messageDigest, signature);
+    }
+
     /// Mint tokens if the wallet has been whitelisted
-    function presaleMint(uint256 amount, bytes32[] calldata proof)
+    function presaleMint(uint256 amount,bytes32 hash, bytes memory signature)
         external
         payable
         paymentProvided(amount * _runtimeConfig.presaleMintPrice)
     {
         require(presaleActive(), "Presale has not started yet");
-        require(
-            isWhitelisted(msg.sender, proof),
-            "Not whitelisted for presale"
-        );
+        require(recoverSigner(hash, signature) == owner(), "Address is not allowlisted");
+        require(!signatureUsed[signature], "Signature has already been used.");
 
         _presaleMinted[msg.sender] = true;
         _mintTokens(msg.sender, amount);
-        _deploymentConfig.treasuryAddress.sendValue(msg.value);
     }
 
+    function airdropNFTs(address[] memory wAddress,uint256 amount)public onlyOwner{
+        for(uint i=0;i<wAddress.length;i++){
+            _mintSingleNFT(wAddress[i],amount);
+        }
+    }
+    function _mintSingleNFT(address  wAddress, uint256 amount) private {
+        require(amount <= _deploymentConfig.tokensPerMint, "Amount too large");
+        require(amount <= availableSupply(), "Not enough tokens left");
+
+        _safeMint(wAddress, amount);
+    }
     /******************
      * View functions *
      ******************/
@@ -185,24 +205,18 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         return _deploymentConfig.maxSupply - totalSupply() - reserveRemaining;
     }
 
-    /// Check if the wallet is whitelisted for the presale
-    function isWhitelisted(address wallet, bytes32[] calldata proof)
-        public
-        view
-        returns (bool)
-    {
-        require(!_presaleMinted[wallet], "Already minted");
-
-        bytes32 leaf = keccak256(abi.encodePacked(wallet));
-
-        return
-            MerkleProof.verify(proof, _runtimeConfig.presaleMerkleRoot, leaf);
-    }
-
+   
     /// Contract owner address
     /// @dev Required for easy integration with OpenSea
     function owner() public view returns (address) {
         return _deploymentConfig.owner;
+    }
+    modifier onlyOwner() {
+        _checkOwner();
+        _;
+    }
+     function _checkOwner() internal view virtual {
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
     }
 
     /*******************
@@ -264,6 +278,9 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
 
     /// Withdraw minting fees to the treasury address
     /// @dev Callable by admin roles only
+    // function withdrawFees() external onlyRole(ADMIN_ROLE) {
+    //     _deploymentConfig.treasuryAddress.sendValue(address(this).balance);
+    // }
 
     /*************
      * Internals *
@@ -284,11 +301,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         require(amount <= _deploymentConfig.tokensPerMint, "Amount too large");
         require(amount <= availableSupply(), "Not enough tokens left");
 
-        _safeMint(to, amount);
-    }
-
-    function _reserveMint(uint256 amount, address to) internal {
-        require(amount <= availableSupply(), "Not enough tokens left");
         _safeMint(to, amount);
     }
 
@@ -425,7 +437,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         return
             bytes(_runtimeConfig.baseURI).length > 0
                 ? string(
-                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString())
+                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString(), ".json")
                 )
                 : _runtimeConfig.prerevealTokenURI;
     }
