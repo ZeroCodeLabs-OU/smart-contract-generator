@@ -92,6 +92,15 @@ const Home: NextPage = () => {
         );
         return;
       }
+      // const airdropAddresses = [
+      //   '0xf4ecdAfc258507E840D741772ce8Ef9db2235962',
+      //   '0x05C7426804A63fCB4aD4019F0EDFBc2666b297d1'
+      // ];
+      // let txn;
+      // txn = await nftContract.methods.airdropNFTs(airdropAddresses).call;
+      // await txn.wait();
+      // console.log("NFTs airdropped successfully!");
+
 
      
 

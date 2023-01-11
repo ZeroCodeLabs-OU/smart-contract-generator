@@ -169,6 +169,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         _mintTokens(msg.sender, amount);
     }
 
+<<<<<<< HEAD
     function airdropNFTs(address[] memory wAddress,uint256 amount)public onlyOwner{
         for(uint i=0;i<wAddress.length;i++){
             _mintSingleNFT(wAddress[i],amount);
@@ -179,6 +180,17 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         require(amount <= availableSupply(), "Not enough tokens left");
 
         _safeMint(wAddress, amount);
+=======
+    function airdropNFTs(address[] calldata wAddress)public onlyOwner{
+        for(uint i=0;i<wAddress.length;i++){
+            _mintSingleNFT(wAddress[i]);
+        }
+    }
+    function _mintSingleNFT(address wAddress)private{
+        uint newTokenID=_tokenIds.current();
+        _safeMint(wAddress, newTokenID);
+        _tokenIds.increment();
+>>>>>>> 2202f1ca39d4eb8fd88f389ba5fcc047449fbe38
     }
     /******************
      * View functions *
