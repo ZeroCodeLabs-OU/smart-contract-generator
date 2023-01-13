@@ -109,7 +109,7 @@ const Home: NextPage = () => {
       
       if(type == 'erc721'){
         let totalSupply:any = parseInt(await nftContract.methods.totalSupply().call());
-        if(totalSupply + amount > maxSupply - reserve){
+        if(Math.round(totalSupply) + Math.round(amount) > Math.round(maxSupply) - Math.round(reserve)){
           toast.error(
             `Exceeds Max Supply`
           );
@@ -118,7 +118,7 @@ const Home: NextPage = () => {
         }
       }else{
         let mintedTokens = parseInt(await nftContract.methods.viewMintedTokenLength().call());
-        console.log(mintedTokens,maxSupply,reserve, mintedTokens <= maxSupply - reserve,"gh")
+        console.log(mintedTokens,maxSupply,reserve, mintedTokens <= Math.round(maxSupply) - Math.round(reserve),"gh")
         if(mintedTokens >= maxSupply - reserve){
           toast.error(
             `Exceeds Max Supply`
@@ -129,7 +129,7 @@ const Home: NextPage = () => {
       }
       
       const tokens_per_person = Number(await nftContract.methods.tokensPerPerson().call());
-      if (holdCount + amount > tokens_per_person) {
+      if (Math.round(holdCount) + Math.round(amount) > tokens_per_person) {
         toast.warn(
           `You can not mint more than ${tokens_per_person} NFTs.`
         );
