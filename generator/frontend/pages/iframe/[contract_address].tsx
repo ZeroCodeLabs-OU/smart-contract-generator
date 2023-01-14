@@ -74,39 +74,89 @@ const Home: NextPage = () => {
   const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/641feefe9682428ab1e3c5bcabee9ad8');
  async function showTransactionFees() {
   try {
-    const nftContract: any = type === 'erc721' ? new web3.eth.Contract(ERC721ABI, address) : new web3.eth.Contract(ERC1155ABI, address);
-    const wethContract = new ethers.Contract(address,ERC721ABI,provider);
-    const gas=await wethContract.estimateGas.mint(ethers.utils.parseEther('1'))
-    const gasPrice = await web3.eth.getGasPrice();
-    console.log(`Current gas price: ${gasPrice} wei`);
-    const fee = gas * gasPrice;
-    const feeInEther =await  web3.utils.fromWei(fee.toString(), 'ether');
-    const totalFeesElement = document.getElementById('total-fees');
-    if (totalFeesElement) {
-      totalFeesElement.innerHTML = `Gas fee : ${feeInEther} ETH`;
+    
+    const nftContract: any = type === 'erc721' ? new ethers.Contract(address, ERC721ABI, provider) : new ethers.Contract(address, ERC1155ABI, provider);
+    const Contract: any = type === 'erc721' ? new web3.eth.Contract(ERC721ABI, address) : new web3.eth.Contract(ERC1155ABI, address);
+
+    if (type === 'erc721') {
+    
+      const gas = await nftContract.estimateGas.mint(amount);
+
+      const gasPrice = await web3.eth.getGasPrice();
+      console.log(`Current gas price: ${gasPrice} wei`);
+      const fee = gas * gasPrice;
+      const feeInEther =await  web3.utils.fromWei(fee.toString(), 'ether');
+      const totalFeesElement = document.getElementById('total-fees');
+      if (totalFeesElement) {
+        totalFeesElement.innerHTML = `Gas fee : ${feeInEther} ETH`;
+      }
+      
+      const maxSupply:any = await Contract.methods.maxSupply().call();
+      
+      let totalSupply:any = await Contract.methods.totalSupply().call();
+      const publicMintPrice:any  = await Contract.methods.publicMintPrice().call();
+      const  publicMintPriceInEth=await  web3.utils.fromWei(publicMintPrice.toString(), 'ether');
+      let remainNFT=maxSupply - totalSupply;
+      let totalAmount=document.getElementById('totalAmount');
+      if(totalAmount){
+        totalAmount.innerHTML=`Total Amount: ${amount *publicMintPriceInEth}`;
+      }
+      const remainingNFT = document.getElementById('RemainingNFT');
+      if (remainingNFT) {
+        remainingNFT.innerHTML = `Remaining NFT : ${remainNFT}`;
+      }
+      const PublicMintPrice = document.getElementById('publicMintPrice');
+      if (PublicMintPrice) {
+        PublicMintPrice.innerHTML = `Public Mint Price: ${publicMintPriceInEth} ETH`; 
+      }
+      const mintedToken = document.getElementById('mintedTokens');
+      let mintedTokensCount:any = await Contract.methods.totalSupply().call();
+      if (mintedToken) {
+        mintedToken.innerHTML = `Minted NFT : ${mintedTokensCount}`;
+      }
+
+  
+    } else if (type === 'erc1155') {
+      
+      const gas = await nftContract.estimateGas.mint(amount, tokenId, "0x00");
+
+
+      const gasPrice = await web3.eth.getGasPrice();
+      console.log(`Current gas price: ${gasPrice} wei`);
+      const fee = gas * gasPrice;
+      const feeInEther =await  web3.utils.fromWei(fee.toString(), 'ether');
+      const totalFeesElement = document.getElementById('total-fees');
+      if (totalFeesElement) {
+        totalFeesElement.innerHTML = `Gas fee : ${feeInEther} ETH`;
+      }
+      
+      const maxSupply:any = await Contract.methods.maxSupply().call();
+      
+      
+      const publicMintPrice:any  = await Contract.methods.publicMintPrice().call();
+      const  publicMintPriceInEth=await  web3.utils.fromWei(publicMintPrice.toString(), 'ether');
+      
+      let totalAmount=document.getElementById('totalAmount');
+      if(totalAmount){
+        totalAmount.innerHTML=`Total Amount: ${amount *publicMintPriceInEth}`;
+      }
+      const mintedToken = document.getElementById('mintedTokens');
+      let mintedTokensCount = await Contract.methods.viewMintedTokenLength().call();
+      if (mintedToken) {
+        mintedToken.innerHTML = `Remaining NFT : ${mintedTokensCount}`;
+      }
+
+      const PublicMintPrice = document.getElementById('publicMintPrice');
+      if (PublicMintPrice) {
+        PublicMintPrice.innerHTML = `Public Mint Price: ${publicMintPriceInEth} ETH`; 
+      }
     }
-    const maxSupply:any = await nftContract.methods.maxSupply().call();
-    let totalSupply:any = await nftContract.methods.totalSupply().call();
-    const publicMintPrice:any  = await nftContract.methods.publicMintPrice().call();
-    const  publicMintPriceInEth=await  web3.utils.fromWei(publicMintPrice.toString(), 'ether');
-    let remainNFT=maxSupply - totalSupply;
-    let totalAmount=document.getElementById('totalAmount');
-    if(totalAmount){
-      totalAmount.innerHTML=`Total Amount: ${amount *publicMintPriceInEth}`;
-    }
-    const remainingNFT = document.getElementById('RemainingNFT');
-    if (remainingNFT) {
-      remainingNFT.innerHTML = `Remaining NFT : ${remainNFT}`;
-    }
-    const PublicMintPrice = document.getElementById('publicMintPrice');
-    if (PublicMintPrice) {
-      PublicMintPrice.innerHTML = `Public Mint Price: ${publicMintPriceInEth} ETH`; 
-    }
-  } catch (error) {
-    console.error(error);
-    toast.error("An error occurred while calculating the transaction fees. Please try again later.");
   }
-}
+    catch (error) {
+      console.error(error);
+      toast.error("An error occurred while calculating the transaction fees. Please try again later.");
+    }
+  }
 
   const mint = async () => {
     // try {
@@ -329,7 +379,9 @@ const Home: NextPage = () => {
         <div id ='totalAmount'></div>
         <div id ='total-fees'></div>
         <div id='RemainingNFT'></div>
+        <div id='mintedTokens'></div>
         <div id='publicMintPrice' text-align='center'></div>
+
         
       </div>
 
