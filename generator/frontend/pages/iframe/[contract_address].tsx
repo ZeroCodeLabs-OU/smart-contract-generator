@@ -143,12 +143,22 @@ const Home: NextPage = () => {
       const mintedToken = document.getElementById('mintedTokens');
       let mintedTokensCount = await Contract.methods.viewMintedTokenLength().call();
       if (mintedToken) {
-        mintedToken.innerHTML = `Remaining NFT : ${mintedTokensCount}`;
+        mintedToken.innerHTML = `Minted NFT : ${mintedTokensCount}`;
       }
 
       const PublicMintPrice = document.getElementById('publicMintPrice');
       if (PublicMintPrice) {
         PublicMintPrice.innerHTML = `Public Mint Price: ${publicMintPriceInEth} ETH`; 
+      }
+      const remainingNFT = document.getElementById('RemainingNFT');
+      const tokenIdSupply:any = await Contract.methods.totalSupply(tokenId).call();
+      console.log(tokenIdSupply)
+      const tokenQuantity : any = await Contract.methods.tokenQuantity().call();
+      console.log(tokenQuantity);
+      
+      let remainNFT=tokenQuantity-tokenIdSupply;
+      if (remainingNFT) {
+        remainingNFT.innerHTML = `Remaining NFT : ${remainNFT}`;
       }
     }
   }
