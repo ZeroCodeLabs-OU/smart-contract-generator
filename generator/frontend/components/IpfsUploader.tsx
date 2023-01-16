@@ -110,7 +110,7 @@ export const IpfsUploader = ({
             <input
               required
               type="file"
-              accept={acceptType}
+              // accept={acceptType}
               multiple={!isPrereveal ? true : false}
               onChange={(e) => setFiles(e.target.files)}
               hidden
