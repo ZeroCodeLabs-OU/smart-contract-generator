@@ -132,7 +132,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         _deploymentConfig = deploymentConfig;
         _runtimeConfig = runtimeConfig;
         if(reservedDetails.tokenIds.length > 0) {
-            _reserveMint(reservedDetails, deploymentConfig.owner);
+            _reservedMint = reservedDetails;
         }
         _preventInitialization = true;
     }
@@ -276,6 +276,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
      /// Contract configuration
     RuntimeConfig internal _runtimeConfig;
     DeploymentConfig internal _deploymentConfig;
+    ReservedMint internal _reservedMint;
 
     /// Flag for disabling initalization for template contracts
     bool internal _preventInitialization;
@@ -293,11 +294,11 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         return mintedTokenId.length;
     }
 
-    function _reserveMint(ReservedMint memory reserveDetails, address owner) internal {
-        require(reserveDetails.amounts.length == reserveDetails.tokenIds.length, "Reserve details array length must be equal");
-        for(uint256 i = 0; i < reserveDetails.amounts.length; i++) {
-            uint256 id = reserveDetails.tokenIds[i];
-            uint256 amount = reserveDetails.amounts[i];
+    function mint(address owner) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_reservedMint.amounts.length == _reservedMint.tokenIds.length, "Reserve details array length must be equal");
+        for(uint256 i = 0; i < _reservedMint.amounts.length; i++) {
+            uint256 id = _reservedMint.tokenIds[i];
+            uint256 amount = _reservedMint.amounts[i];
             require(totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id], "Token Id limit Exceeds");
             if(isTokenExist[id] == true){
                 _mint(owner, id ,amount, "");
@@ -308,6 +309,7 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
                 _mint(owner, id ,amount, "");
             }
         }
+        delete _reservedMint;
     }
     
     /// Validate deployment config

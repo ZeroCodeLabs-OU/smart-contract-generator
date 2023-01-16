@@ -97,8 +97,10 @@ const Home: NextPage = () => {
     let incrm = reserved
       ? incrementer1.methods.initialize(deploy, run, reserved)
       : incrementer1.methods.initialize(deploy, run);
+    const gasPrice = await web3?.eth?.getGasPrice();
+    let estimate = await incrm.estimateGas({ from: account });
     incrm
-      .send({ from: account }, function (err: any, res: any) {
+      .send({ from: account, gasPrice:parseInt(gasPrice)*2, gas:estimate }, function (err: any, res: any) {
         if (err) {
           setIsWorking(false);
         }
@@ -113,12 +115,26 @@ const Home: NextPage = () => {
       .on("error", function (error: any) {
         setIsWorking(false);
         toast.error(
-          "Contract deployed Successfully.Error while initialize the contract."
+          "Contract deployed Successfully. Error while initialize the contract."
         );
       })
       .on("receipt", function (receipt: any) {
         if (receipt.status == true) {
-          toast.success("Contract deployed successfully.");
+          toast.success(`Contract deployed successfully.${reserved || teamReserve>0 ? 'Confirm reserved mint.': ''} `);
+          console.log(reserved, teamReserve)
+          if (reserved || teamReserve>0) {
+            incrementer1.methods['mint(address)'](ownerAddress).send({ from: account })
+            .on("receipt", function (receipt: any) {
+              toast.success(`Reserved mint confirmed.`);
+            })
+            .on("error", function (receipt: any) {
+              setIsWorking(false);
+              toast.error(
+                "Reserved mint failed."
+              );
+            })
+          }
+          
         } else {
           contractIntailize(
             contractaddress,
@@ -142,22 +158,21 @@ const Home: NextPage = () => {
 
   const changeReservedArray = (val: string) => {
     let newTokens = [...teamReserveArray];
-    newTokens[currentTeamId] = Number(val);
+    newTokens[currentId] = Number(val);
     setTeamReserveArray(newTokens);
-   
   };
-  useEffect(()=>{
-  if(teamReserveArray && teamReserveArray.length>0) {
-    let ids = teamReserveArray
-    .map((el, i) => {
-      if (el != 0) return i;
-      else return undefined;
-    })
-    .filter((el) => el != undefined);
-    //@ts-ignore
-  setReservedIds(ids);
-  }
-  },[teamReserveArray])
+  useEffect(() => {
+    if (teamReserveArray && teamReserveArray.length > 0) {
+      let ids = teamReserveArray
+        .map((el, i) => {
+          if (el != 0) return i;
+          else return undefined;
+        })
+        .filter((el) => el != undefined);
+      //@ts-ignore
+      setReservedIds(ids);
+    }
+  }, [teamReserveArray]);
   const changeTokenArray = (val: string) => {
     let newTokens = [...tokenQuantityArray];
     newTokens[currentId] = Number(val);
@@ -301,124 +316,127 @@ const Home: NextPage = () => {
       }
 
       axios(config).then(async function (response: any) {
-        const code: any = "0x" + response.data.bytecode;
-        const incrementer: any = new web3.eth.Contract(response.data.abi);
-        const publicSaleStart: any = moment
-          .utc(publicMintStartDate)
-          .format("YYYY-MM-DDTHH:mm:00+00:00");
-        const preSaleStart: any = moment
-          .utc(presaleMintStartDate)
-          .format("YYYY-MM-DDTHH:mm:00+00:00");
-        const gas = await web3.eth.estimateGas({ from: account, data: code });
-        const gasPrice = await web3.eth.getGasPrice();
-        const gaslimit = (gas * gasPrice) / 10 ** 18;
-        const balance = await web3.eth.getBalance(account);
-
-        if (balance / 10 ** 18 > gaslimit) {
-          incrementer
-            .deploy({ data: code })
-            .send({ from: account }, function (err: any, res: any) {
-              if (err) {
-                setIsWorking(false);
-              }
-              if (res) {
-                setIsWorking(true);
-                toast.success(
-                  "Your Transaction is sent. Wait For confirmation"
-                );
-              }
-            })
-            .on("error", function (error: any) {
-              setIsWorking(false);
-              toast.error("Transaction error or is  in queue.");
-            })
-            .on("receipt", function (receipt: any) {
-              let contractaddress: any = receipt.contractAddress;
-              setTimeout(function () {
-                let incrementer1 = new web3.eth.Contract(
-                  response.data.abi,
-                  receipt.contractAddress
-                );
-                console.log(incrementer1);
-                let mintPriceETH = BigNumber(
-                  `${(mintPrice * 10 ** Number(18)).toFixed(0)}`
-                ).toFixed();
-                let presaleMintPriceETH = BigNumber(
-                  `${(presaleMintPrice * 10 ** Number(18)).toFixed(0)}`
-                ).toFixed();
-                if (type == "erc721") {
-                  contractIntailize(
-                    contractaddress,
-                    incrementer1,
-                    [
-                      name,
-                      symbol,
-                      ownerAddress,
-                      maxSupply,
-                      teamReserve,
-                      maxNftsPerTx,
-                      maxNftsPerWallet,
-                      treasuryAddress,
-                    ],
-                    [
-                      baseUri,
-                      metadataUpdatable,
-                      mintPriceETH,
-                      "false",
-                      presaleMintPriceETH,
-                      "false",
-                      new Date(publicSaleStart).getTime() / 1000,
-                      new Date(preSaleStart).getTime() / 1000,
-                      prerevealBaseUri,
-                      merkleRoot,
-                      royaltiesShare * 100,
-                      royaltiesAddress,
-                    ]
-                  );
-                } else {
-                  contractIntailize(
-                    contractaddress,
-                    incrementer1,
-                    [
-                      name,
-                      symbol,
-                      ownerAddress,
-                      maxSupply,
-                      tokenQuantityArray,
-                      maxNftsPerTx,
-                      maxNftsPerWallet,
-                      treasuryAddress,
-                    ],
-                    [
-                      baseUri,
-                      metadataUpdatable,
-                      mintPriceETH,
-                      "false",
-                      presaleMintPriceETH,
-                      "false",
-                      new Date(publicSaleStart).getTime() / 1000,
-                      new Date(preSaleStart).getTime() / 1000,
-                      prerevealBaseUri,
-                      merkleRoot,
-                      royaltiesShare * 100,
-                      royaltiesAddress,
-                    ],
-                    [
-                      reservedIds,
-                      teamReserveArray.filter((item: any) => item != 0),
-                    ]
+        try {
+          const code: any = "0x" + response.data.bytecode;
+          const incrementer: any = new web3.eth.Contract(response.data.abi);
+          const publicSaleStart: any = moment
+            .utc(publicMintStartDate)
+            .format("YYYY-MM-DDTHH:mm:00+00:00");
+          const preSaleStart: any = moment
+            .utc(presaleMintStartDate)
+            .format("YYYY-MM-DDTHH:mm:00+00:00");
+          const gasPrice = await web3?.eth?.getGasPrice();
+          let gasCost = await incrementer.deploy({data:code}).estimateGas({from:account})
+          const gaslimit = (gasCost * gasPrice) / 10 ** 18;
+          const balance = await web3.eth.getBalance(account);
+          if (balance / 10 ** 18 > gaslimit) {
+            incrementer
+              .deploy({ data: code })
+              .send({ from: account, gasPrice:parseInt(gasPrice), gas:gasCost }, function (err: any, res: any) {
+                if (err) {
+                  setIsWorking(false);
+                }
+                if (res) {
+                  setIsWorking(true);
+                  toast.success(
+                    "Your Transaction is sent. Wait For confirmation"
                   );
                 }
-              }, 2000);
-              setName("");
-              setSymbol("");
-              setBaseUri("");
-              setMaxSupply(1);
-              setTeamReserve(0);
-              setMintPrice(0);
-            });
-        } else {
-          toast.error("Insufficient Funds");
+              })
+              .on("error", function (error: any) {
+                setIsWorking(false);
+                toast.error("Transaction error or is  in queue.");
+              })
+              .on("receipt", function (receipt: any) {
+                let contractaddress: any = receipt.contractAddress;
+                setTimeout(function () {
+                  let incrementer1 = new web3.eth.Contract(
+                    response.data.abi,
+                    receipt.contractAddress
+                  );
+                  console.log(incrementer1);
+                  let mintPriceETH = BigNumber(
+                    `${(mintPrice * 10 ** Number(18)).toFixed(0)}`
+                  ).toFixed();
+                  let presaleMintPriceETH = BigNumber(
+                    `${(presaleMintPrice * 10 ** Number(18)).toFixed(0)}`
+                  ).toFixed();
+                  if (type == "erc721") {
+                    contractIntailize(
+                      contractaddress,
+                      incrementer1,
+                      [
+                        name,
+                        symbol,
+                        ownerAddress,
+                        maxSupply,
+                        teamReserve,
+                        maxNftsPerTx,
+                        maxNftsPerWallet,
+                        treasuryAddress,
+                      ],
+                      [
+                        baseUri,
+                        metadataUpdatable,
+                        mintPriceETH,
+                        "false",
+                        presaleMintPriceETH,
+                        "false",
+                        new Date(publicSaleStart).getTime() / 1000,
+                        new Date(preSaleStart).getTime() / 1000,
+                        prerevealBaseUri,
+                        merkleRoot,
+                        royaltiesShare * 100,
+                        royaltiesAddress,
+                      ]
+                    );
+                  } else {
+                    contractIntailize(
+                      contractaddress,
+                      incrementer1,
+                      [
+                        name,
+                        symbol,
+                        ownerAddress,
+                        maxSupply,
+                        tokenQuantityArray,
+                        maxNftsPerTx,
+                        maxNftsPerWallet,
+                        treasuryAddress,
+                      ],
+                      [
+                        baseUri,
+                        metadataUpdatable,
+                        mintPriceETH,
+                        "false",
+                        presaleMintPriceETH,
+                        "false",
+                        new Date(publicSaleStart).getTime() / 1000,
+                        new Date(preSaleStart).getTime() / 1000,
+                        prerevealBaseUri,
+                        merkleRoot,
+                        royaltiesShare * 100,
+                        royaltiesAddress,
+                      ],
+                      [
+                        reservedIds,
+                        teamReserveArray.filter((item: any) => item != 0),
+                      ]
+                    );
+                  }
+                }, 2000);
+                setName("");
+                setSymbol("");
+                setBaseUri("");
+                setMaxSupply(1);
+                setTeamReserve(0);
+                setMintPrice(0);
+              });
+          } else {
+            toast.error("Insufficient Funds");
+          }
+        } catch (e) {
+          toast.error("Provider error");
         }
       });
     } catch (e) {
@@ -550,7 +568,7 @@ const Home: NextPage = () => {
                 <TextField
                   required
                   id="input-team-reserve"
-                  label="Team Reseved NFT Count"
+                  label="Team Reserved NFT Count"
                   value={teamReserve}
                   type="number"
                   onChange={(e) => {

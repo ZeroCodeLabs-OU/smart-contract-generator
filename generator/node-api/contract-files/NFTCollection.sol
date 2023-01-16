@@ -121,9 +121,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         _deploymentConfig = deploymentConfig;
         _runtimeConfig = runtimeConfig;
 
-        if(deploymentConfig.reservedSupply > 0) {
-            _reserveMint(deploymentConfig.reservedSupply, deploymentConfig.owner);
-        }
         _preventInitialization = true;
     }
 
@@ -158,6 +155,12 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         _presaleMinted[msg.sender] = true;
         _mintTokens(msg.sender, amount);
         _deploymentConfig.treasuryAddress.sendValue(msg.value);
+    }
+
+    function mint(address to) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_deploymentConfig.reservedSupply <= availableSupply() && _deploymentConfig.reservedSupply > 0, "Not enough tokens left");
+        _safeMint(to, _deploymentConfig.reservedSupply);
+        _deploymentConfig.reservedSupply = 0;
     }
 
     /******************
@@ -218,29 +221,9 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         _transferOwnership(newOwner);
     }
 
-    /// Transfer contract ownership
-    function transferAdminRights(address to) external onlyRole(ADMIN_ROLE) {
-        require(!hasRole(ADMIN_ROLE, to), "Already an admin");
-        require(msg.sender != _deploymentConfig.owner, "Use transferOwnership");
-
-        _revokeRole(ADMIN_ROLE, msg.sender);
-        _grantRole(ADMIN_ROLE, to);
-    }
-
     /*****************
      * Admin actions *
      *****************/
-
-    /// Mint a token from the reserve
-    function reserveMint(address to, uint256 amount)
-        external
-        onlyRole(ADMIN_ROLE)
-    {
-        require(amount <= reserveRemaining, "Not enough reserved");
-
-        reserveRemaining -= amount;
-        _mintTokens(to, amount);
-    }
 
     /// Get full contract information
     /// @dev Convenience helper
@@ -284,11 +267,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         require(amount <= _deploymentConfig.tokensPerMint, "Amount too large");
         require(amount <= availableSupply(), "Not enough tokens left");
 
-        _safeMint(to, amount);
-    }
-
-    function _reserveMint(uint256 amount, address to) internal {
-        require(amount <= availableSupply(), "Not enough tokens left");
         _safeMint(to, amount);
     }
 
