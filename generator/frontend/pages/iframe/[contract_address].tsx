@@ -154,45 +154,45 @@ const Home: NextPage = () => {
       const balance = await web3.eth.getBalance(account);
       
 
-      if (isPublic) {
-        if (balance > mintPrice * amount) {
-          const gasPrice = parseInt(await web3.eth.getGasPrice()) * (curr == "matic" ? 3 : 1);
-          if (type == 'erc721') {
-            console.log('%c[contract_address].tsx line:152 gasPrice', 'color: #007acc;', gasPrice);
-            nftContract.methods.mint(amount).send({ from: account, value: mintPrice * amount, gasPrice: gasPrice }, sendCallBack).on('error', function (error: any) {
-              setIsWorking(false);
-              toast.error("Error while mint the NFT. Try Again!.");
-            }).on("receipt",onReceipt)
+        if (isPublic) {
+          if (balance > mintPrice * amount) {
+            const gasPrice = parseInt(await web3.eth.getGasPrice()) * (curr == "matic" ? 3 : 1);
+            if (type == 'erc721') {
+              console.log('%c[contract_address].tsx line:152 gasPrice', 'color: #007acc;', gasPrice);
+              nftContract.methods.mint(amount).send({ from: account, value: mintPrice * amount, gasPrice: gasPrice }, sendCallBack).on('error', function (error: any) {
+                setIsWorking(false);
+                toast.error("Error while mint the NFT. Try Again!.");
+              }).on("receipt",onReceipt)
+            } else {
+              console.log('%c[contract_address].tsx line:152 gasPrice', 'color: #007acc;', gasPrice);
+              nftContract.methods.mint(amount, tokenId, "0x00").send({ from: account, value: mintPrice * amount, gasPrice: gasPrice }, sendCallBack).on('error', function (error: any) {
+                setIsWorking(false);
+                toast.error("Error while mint the NFT. Try Again!.");
+              }).on('receipt', onReceipt)
+            }
           } else {
-            console.log('%c[contract_address].tsx line:152 gasPrice', 'color: #007acc;', gasPrice);
-            nftContract.methods.mint(amount, tokenId, "0x00").send({ from: account, value: mintPrice * amount, gasPrice: gasPrice }, sendCallBack).on('error', function (error: any) {
-              setIsWorking(false);
-              toast.error("Error while mint the NFT. Try Again!.");
-            }).on('receipt', onReceipt)
+            toast.error("Insufficient funds");
           }
-        } else {
-          toast.error("Insufficient funds");
         }
+        else if (isPresale) {
+          let signature = ''; // Signature obtained from backend server
+      let hash = ''; // Hash of the message signed by the user
+      if (balance > preSalePrice * amount) {
+          if (type === 'erc721') {
+              nftContract.methods.presaleMint(amount, hash, signature).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function () {
+                setIsWorking(false);
+                toast.error("Error while mint the NFT. Try Again!.");
+              }).on('receipt', onReceipt)
+          } else {
+              nftContract.methods.presaleMint(amount, tokenId, hash, signature).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function (error: any) {
+                setIsWorking(false);
+                toast.error("Error while mint the NFT. Try Again!.");
+              }).on('receipt', onReceipt)
+          }
+      } else {
+          toast.error("Insufficient Funds");
       }
-      else if (isPresale) {
-        let signature = ''; // Signature obtained from backend server
-    let hash = ''; // Hash of the message signed by the user
-    if (balance > preSalePrice * amount) {
-        if (type === 'erc721') {
-            nftContract.methods.presaleMint(amount, hash, signature).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function () {
-              setIsWorking(false);
-              toast.error("Error while mint the NFT. Try Again!.");
-            }).on('receipt', onReceipt)
-        } else {
-            nftContract.methods.presaleMint(amount, tokenId, hash, signature).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function (error: any) {
-              setIsWorking(false);
-              toast.error("Error while mint the NFT. Try Again!.");
-            }).on('receipt', onReceipt)
-        }
-    } else {
-        toast.error("Insufficient Funds");
-    }
-    }
+      }
 
       
       else {
