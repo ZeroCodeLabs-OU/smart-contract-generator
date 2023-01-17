@@ -12,8 +12,6 @@ import axios from 'axios';
 import { CurrencyContext } from "../CurrencyProvider"
 import Web3 from 'web3';
 const {ethers,BigNumber}=require('ethers');
-// require('dotenv').configure()
-
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -69,7 +67,6 @@ const Home: NextPage = () => {
     }
     setIsWorking(false);
   }
-  
   const address: any = contract_address;
   const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/641feefe9682428ab1e3c5bcabee9ad8');
  async function showTransactionFees() {
@@ -96,7 +93,8 @@ const Home: NextPage = () => {
       let totalSupply:any = await Contract.methods.totalSupply().call();
       const publicMintPrice:any  = await Contract.methods.publicMintPrice().call();
       const  publicMintPriceInEth=await  web3.utils.fromWei(publicMintPrice.toString(), 'ether');
-      let remainNFT=maxSupply - totalSupply;
+      const reserve:any  = await nftContract.methods.reserveRemaining().call();
+      let remainNFT=(maxSupply-reserve) - totalSupply;
       let totalAmount=document.getElementById('totalAmount');
       if(totalAmount){
         totalAmount.innerHTML=`Total Amount: ${amount *publicMintPriceInEth}`;
@@ -131,7 +129,7 @@ const Home: NextPage = () => {
       }
       
       const maxSupply:any = await Contract.methods.maxSupply().call();
-      
+      const reserve:any  = await nftContract.methods.reserveRemaining().call();
       
       const publicMintPrice:any  = await Contract.methods.publicMintPrice().call();
       const  publicMintPriceInEth=await  web3.utils.fromWei(publicMintPrice.toString(), 'ether');
@@ -156,20 +154,19 @@ const Home: NextPage = () => {
       const tokenQuantity : any = await Contract.methods.tokenQuantity().call();
       console.log(tokenQuantity);
       
-      let remainNFT=tokenQuantity-tokenIdSupply;
+      let remainNFT=(tokenQuantity-reserve)-tokenIdSupply;
       if (remainingNFT) {
         remainingNFT.innerHTML = `Remaining NFT : ${remainNFT}`;
       }
     }
+  } catch (error) {
+    console.error(error);
+    toast.error("An error occurred while calculating the transaction fees. Please try again later.");
   }
-    catch (error) {
-      console.error(error);
-      toast.error("An error occurred while calculating the transaction fees. Please try again later.");
-    }
-  }
+}
 
   const mint = async () => {
-    // try {
+    try {
       const address: any = contract_address;
       if (!active) {
         toast.warn("Please connect wallet.");
@@ -204,13 +201,12 @@ const Home: NextPage = () => {
           return;
         }
       }
-      const maxSupply:any = await nftContract.methods.maxSupply().call();
-      const reserve:any  = await nftContract.methods.reserveRemaining().call();
-      console.log(maxSupply - reserve);
+      const maxSupply:any = parseInt(await nftContract.methods.maxSupply().call());
+      const reserve:any  = parseInt(await nftContract.methods.reserveRemaining().call());
       
       if(type == 'erc721'){
-        let totalSupply:any = await nftContract.methods.totalSupply().call();
-        if(totalSupply + amount > maxSupply - reserve){
+        let totalSupply:any = parseInt(await nftContract.methods.totalSupply().call());
+        if(Math.round(totalSupply) + Math.round(amount) > Math.round(maxSupply) - Math.round(reserve)){
           toast.error(
             `Exceeds Max Supply`
           );
@@ -218,8 +214,8 @@ const Home: NextPage = () => {
           return;
         }
       }else{
-        let mintedTokens = await nftContract.methods.viewMintedTokenLength().call();
-        console.log(mintedTokens,maxSupply,reserve, mintedTokens <= maxSupply - reserve,"gh")
+        let mintedTokens = parseInt(await nftContract.methods.viewMintedTokenLength().call());
+        console.log(mintedTokens,maxSupply,reserve, mintedTokens <= Math.round(maxSupply) - Math.round(reserve),"gh")
         if(mintedTokens >= maxSupply - reserve){
           toast.error(
             `Exceeds Max Supply`
@@ -230,7 +226,7 @@ const Home: NextPage = () => {
       }
       
       const tokens_per_person = Number(await nftContract.methods.tokensPerPerson().call());
-      if (holdCount + amount > tokens_per_person) {
+      if (Math.round(holdCount) + Math.round(amount) > tokens_per_person) {
         toast.warn(
           `You can not mint more than ${tokens_per_person} NFTs.`
         );
@@ -246,96 +242,74 @@ const Home: NextPage = () => {
       const balance = await web3.eth.getBalance(account);
       
 
-      if (isPublic) {
-        if (balance > mintPrice * amount) {
-          if (type == 'erc721') {
-            nftContract.methods.mint(amount).send({ from: account, value: mintPrice * amount }, sendCallBack).on('error', function (error: any) {
-              setIsWorking(false);
-              toast.error("Error while mint the NFT. Try Again!.");
-            }).on("receipt",onReceipt)
-          } else {
-            
-            nftContract.methods.mint(amount, tokenId, "0x00").send({ from: account, value: mintPrice * amount }, sendCallBack).on('error', function (error: any) {
-              setIsWorking(false);
-              toast.error("Error while mint the NFT. Try Again!.");
-            }).on('receipt', onReceipt)
-          }
-        } else {
-          toast.error("Insufficient funds");
-        }
-      }
-      else if (isPresale) {
-        if (presaleMerkleRoot != '0000000000000000000000000000000000000000000000000000000000000000') {
-          let config: any = {
-            method: 'get',
-            url: baseURL + `getMerkleProof?merkle=${presaleMerkleRoot}&address=${account}`,
-            headers: {}
-          };
-          axios(config).then(function (response: any) {
-              console.log(response, "res")
-              if (response.status == 200) {
-                const proof: any = response.data.data;
-                if (proof.length == 0) {
-                  toast.error("You are not in whitelist.");
+      if (isPresale) {
+        let signature = ''; // Signature obtained from backend server
+        let hash = ''; // Hash of the message signed by the user
+        if (balance > preSalePrice * amount) {
+            if (type === 'erc721') {
+                nftContract.methods.presaleMint(amount, hash, signature).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function () {
                   setIsWorking(false);
-                  return;
-                }
-                if (balance > preSalePrice * amount) {
-                  if (type === 'erc721') {
-                    nftContract.methods.presaleMint(amount, proof).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function () {
-                      setIsWorking(false);
-                      toast.error("Error while mint the NFT. Try Again!.");
-                    }).on('receipt', onReceipt)
-                  } else {
-                    
-                    nftContract.methods.presaleMint(amount, tokenId, proof).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function (error: any) {
-                      setIsWorking(false);
-                      toast.error("Error while mint the NFT. Try Again!.");
-                    }).on('receipt', onReceipt)
-                  }
-                } else {
-                  toast.error("Insufficient Funds");
-                }
-              } else {
-                toast.error("You are not in whitelist.");
-              }
-
-            })
-            .catch(function (error: any) {
-              console.log(error);
-            });
-
+                  toast.error("Error while mint the NFT. Try Again!.");
+                }).on('receipt', onReceipt)
+            } else {
+                nftContract.methods.presaleMint(amount, tokenId, hash, signature).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function (error: any) {
+                  setIsWorking(false);
+                  toast.error("Error while mint the NFT. Try Again!.");
+                }).on('receipt', onReceipt)
+            }
         } else {
-          toast.warn("You are not whitelisted")
+            toast.error("Insufficient Funds");
         }
+    }
+    
 
-      }
-      else {
-        toast.warn("Minting is not started yet.");
-        setIsWorking(false);
-        return;
-      }
-
-    // } catch (e) {
-    //   console.log(e);
-    // } finally {
-    //   setIsWorking(false);
-    // }
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsWorking(false);
+    }
   };
-
+  const isValid = async (address:string) =>{
+    try {
+      const ERC1155InterfaceId: string = "0xd9b67a26";
+      const ERC721InterfaceId: string = "0x80ac58cd";
+      const web3: any = new Web3(await rpcURL(curr));
+      console.log(rpcURL(curr));
+      if(type == 'erc721') {
+        const nft721Contract: any = new web3.eth.Contract(ERC721ABI, address) 
+        const is721 = await nft721Contract.methods.supportsInterface(ERC721InterfaceId).call()
+        console.log(is721);
+        return is721 ? "Valid 721" : false
+      }
+      if(type == 'erc1155') {
+        const nft1155Contract: any = new web3.eth.Contract(ERC1155ABI, address) 
+        const is1155 = await nft1155Contract.methods.supportsInterface(ERC1155InterfaceId).call()
+        return is1155 ? "Valid 1155" : false
+      }
+      return false
+    } catch(e:any) {
+      console.log(e);
+      return false
+    }
+    
+  }
   useEffect(() => {
     if (curr !== undefined) {
-      const web3: any = new Web3(Web3.givenProvider || rpcURL(curr));
       const address: any = contract_address;
-      if (web3.utils.isAddress(address) == true && address.length != 42) {
-        toast.error("Contract doesn't exist in our backend.");
-        return
-      }
-      setIsWorking(false);
-      handleCurrencyChange(curr, switchNetwork)
+      isValid(address).then((res)=>{
+        if(!res) {
+          toast.error("Contract is not valid");
+          setIsWorking(true);
+        } else {
+          console.log(res); 
+          setIsWorking(false);
+          handleCurrencyChange(curr, switchNetwork)
+        }
+      })
+      
     }
   }, [curr]);
-
+  
   return (
     <Layout>
       <Header />
