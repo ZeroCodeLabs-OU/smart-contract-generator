@@ -175,51 +175,26 @@ const Home: NextPage = () => {
         }
       }
       else if (isPresale) {
-        if (presaleMerkleRoot != '0000000000000000000000000000000000000000000000000000000000000000') {
-          let config: any = {
-            method: 'get',
-            url: baseURL + `getMerkleProof?merkle=${presaleMerkleRoot}&address=${account}`,
-            headers: {}
-          };
-          axios(config).then(function (response: any) {
-              console.log(response, "res")
-              if (response.status == 200) {
-                const proof: any = response.data.data;
-                if (proof.length == 0) {
-                  toast.error("You are not in whitelist.");
-                  setIsWorking(false);
-                  return;
-                }
-                if (balance > preSalePrice * amount) {
-                  if (type === 'erc721') {
-                    nftContract.methods.presaleMint(amount, proof).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function () {
-                      setIsWorking(false);
-                      toast.error("Error while mint the NFT. Try Again!.");
-                    }).on('receipt', onReceipt)
-                  } else {
-                    
-                    nftContract.methods.presaleMint(amount, tokenId, proof).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function (error: any) {
-                      setIsWorking(false);
-                      toast.error("Error while mint the NFT. Try Again!.");
-                    }).on('receipt', onReceipt)
-                  }
-                } else {
-                  toast.error("Insufficient Funds");
-                }
-              } else {
-                toast.error("You are not in whitelist.");
-              }
-
-            })
-            .catch(function (error: any) {
-              console.log(error);
-            });
-
+        let signature = ''; // Signature obtained from backend server
+    let hash = ''; // Hash of the message signed by the user
+    if (balance > preSalePrice * amount) {
+        if (type === 'erc721') {
+            nftContract.methods.presaleMint(amount, hash, signature).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function () {
+              setIsWorking(false);
+              toast.error("Error while mint the NFT. Try Again!.");
+            }).on('receipt', onReceipt)
         } else {
-          toast.warn("You are not whitelisted")
+            nftContract.methods.presaleMint(amount, tokenId, hash, signature).send({ from: account, value: preSalePrice * amount }, sendCallBack).on('error', function (error: any) {
+              setIsWorking(false);
+              toast.error("Error while mint the NFT. Try Again!.");
+            }).on('receipt', onReceipt)
         }
+    } else {
+        toast.error("Insufficient Funds");
+    }
+    }
 
-      }
+      
       else {
         toast.warn("Minting is not started yet.");
         setIsWorking(false);

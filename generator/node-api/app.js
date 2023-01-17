@@ -7,6 +7,8 @@ const cors = require('cors');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require("keccak256");
 const bodyparser = require("body-parser");
+const csv = require('csv-parser');
+
 
 
 
@@ -148,25 +150,67 @@ app.get('/getMerkleRoot', async (req, res) => {
     res.status(200).send({ success: true, data: rootHash })
 });
 
-app.get('/getMerkleProof', async (req, res) => {
-    let merkle = req.query.merkle;
-    let address = req.query.address;
-    let check = fs.existsSync(`./whitelist/${merkle}.json`)
-    let data;
-    if(check) {
-        data = fs.readFileSync(`./whitelist/${merkle}.json`, 'utf8');   
-    } else {
-        return res.status(400).send({ success:false, err: "NO_WHITELIST_FOUND" })
-    }
-    let whitelistAddresses = JSON.parse(data);
-    console.log("whitelistAddresses", whitelistAddresses)
-    let leaves = whitelistAddresses.map(addr => keccak256(addr))
-    let merkleTree = new MerkleTree(leaves, keccak256, { sortPairs: true })
-    let hashedAddress = keccak256(address)
-    let proof = merkleTree.getHexProof(hashedAddress);
-    res.status(200).send({ success: true, data: proof })
-})
 
+
+
+app.post('/signature', async (req, res) => {
+    const {walletAddress} = req.body;
+  
+    // Check if address is allowlisted
+    if (!allowlistedAddresses.has(walletAddress)) {
+      return res.status(400).send({error: 'Address not allowlisted'});
+    }
+  
+    // Sign message with private key
+    let messageHash = ethers.utils.id(walletAddress);
+    let messageBytes = ethers.utils.arrayify(messageHash);
+  
+    let signature;
+    try {
+      signature = await signer.signMessage(messageBytes);
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send({error: 'Error signing message'});
+    }
+    const signedData = {
+      walletAddress: walletAddress,
+      signature: signature
+    };
+    
+    // export the object
+    // module.exports = signedData;
+  
+    res.send(signedData);
+  
+    // check signature
+    const checkSignature = async (address, signature) => {
+      // Compute the message digest
+      const messageHash = ethers.utils.id(address);
+      console.log(messageHash);
+      // Call the recoverSigner function on the smart contract
+      const signerAddress = await contract.methods.recoverSigner(messageHash, signature).call();
+      // Check if the signerAddress is the same as the address passed as an argument
+      console.log(signerAddress)
+      if(signerAddress === address) {
+          console.log("Signature is valid");
+      } else {
+          console.log("Signature is invalid");
+      }
+    }
+  
+    checkSignature(signedData.walletAddress,signedData.signature);
+  });
+  app.post('/allowlist', async (req, res) => {
+    const { addresses } = req.body;
+    
+    
+    // Add addresses to allowlistedAddresses set
+    for (let i = 0; i < addresses.length; i++) {
+        allowlistedAddresses.add(addresses[i]);
+    }
+    
+    res.send({ message: 'Allowlisted addresses added successfully' });
+});
 
 app.get('/', (req, res) => {
     res.status(200).send({ success: true, msg: "API is working" });

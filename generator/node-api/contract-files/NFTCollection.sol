@@ -6,7 +6,7 @@ import "./Address.sol";
 import "./Strings.sol";
 import "./AccessControl.sol";
 import "./Initializable.sol";
-import "./MerkleProof.sol";
+
 import "./ECDSA.sol";
 import "./ERC2981.sol";
 import "./Base64.sol";
@@ -18,7 +18,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
     using Address for address payable;
     using Strings for uint256;
     mapping(bytes => bool) public signatureUsed;
-    
+    mapping(address => uint256) public whitelistTiers;
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIds;
@@ -70,9 +70,9 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         // Pre-reveal token URI for placholder metadata. This will be returned for all token IDs until a `baseURI`
         // has been set.
         string prerevealTokenURI;
-        // Root of the Merkle tree of whitelisted addresses. This is used to check if a wallet has been whitelisted
+        // Root of the Merkle tree of whitelisted addresses. This is used to check if a wallet has been     listed
         // for presale minting.
-        bytes32 presaleMerkleRoot;
+        // bytes32 presaleMerkleRoot;
         // Secondary market royalties in basis points (100 bps = 1%)
         uint256 royaltiesBps;
         // Address for royalties
@@ -169,18 +169,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         _mintTokens(msg.sender, amount);
     }
 
-<<<<<<< HEAD
-    function airdropNFTs(address[] memory wAddress,uint256 amount)public onlyOwner{
-        for(uint i=0;i<wAddress.length;i++){
-            _mintSingleNFT(wAddress[i],amount);
-        }
-    }
-    function _mintSingleNFT(address  wAddress, uint256 amount) private {
-        require(amount <= _deploymentConfig.tokensPerMint, "Amount too large");
-        require(amount <= availableSupply(), "Not enough tokens left");
-
-        _safeMint(wAddress, amount);
-=======
     function airdropNFTs(address[] calldata wAddress)public onlyOwner{
         for(uint i=0;i<wAddress.length;i++){
             _mintSingleNFT(wAddress[i]);
@@ -190,7 +178,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         uint newTokenID=_tokenIds.current();
         _safeMint(wAddress, newTokenID);
         _tokenIds.increment();
->>>>>>> 2202f1ca39d4eb8fd88f389ba5fcc047449fbe38
     }
     /******************
      * View functions *
@@ -547,9 +534,8 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         return _runtimeConfig.presaleMintStart;
     }
 
-    function presaleMerkleRoot() public view returns (bytes32) {
-        return _runtimeConfig.presaleMerkleRoot;
-    }
+   
+
 
     function baseURI() public view returns (string memory) {
         return _runtimeConfig.baseURI;
