@@ -20,7 +20,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
     mapping(bytes => bool) public signatureUsed;
     mapping(address => uint256) public whitelistTiers;
     using Counters for Counters.Counter;
-    address public whitelistBurner;
 
     Counters.Counter private _tokenIds;
     
@@ -163,7 +162,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         paymentProvided(amount * _runtimeConfig.presaleMintPrice)
     {
         require(presaleActive(), "Presale has not started yet");
-        require(recoverSigner(hash, signature) == whitelistBurner, "Address is not allowlisted");
+        require(recoverSigner(hash, signature) == owner(), "Address is not allowlisted");
         require(!signatureUsed[signature], "Signature has already been used.");
 
         _presaleMinted[msg.sender] = true;
@@ -231,11 +230,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         require(newOwner != _deploymentConfig.owner, "Already the owner");
         _transferOwnership(newOwner);
     }
-     function setWhitelistBurner(address _whitelistBurner) public onlyOwner {
-        whitelistBurner = _whitelistBurner;
-    }
-
-    
 
     /// Transfer contract ownership
     function transferAdminRights(address to) external onlyRole(ADMIN_ROLE) {

@@ -7,44 +7,7 @@ const cors = require('cors');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require("keccak256");
 const bodyparser = require("body-parser");
-
-const request = require('request');
-
-const bodyParser = require('body-parser');
-// const web3 = new Web3(new Web3.providers.HttpProvider('https://polygon-mumbai.infura.io/v3/641feefe9682428ab1e3c5bcabee9ad8'));
-const ethers =require('ethers');
-// const sig = require('eth-sig-util')
-
-const Web3 = require('web3');
-
-
-const contractAbiFilePath = path.join(__dirname, './build/NFTCollection.json');
-  const contractAbiFileData = require(contractAbiFilePath);
-  const contractABI = contractAbiFileData.abi;
-  // const contractBytecode = contractAbiFileData.bytecode;
-
-// console.log(contractABI)
-const web3 = new Web3(new Web3.providers.HttpProvider('https://polygon-mumbai.infura.io/v3/641feefe9682428ab1e3c5bcabee9ad8'));// Database for storing allowlisted addresses
-// web3.eth.net.getId().then(console.log);
-
-
-
-
-
-// Address of the deployed smart contract
-const contractAddress = "0xf89a5730B77D02381860F0cBea356D30dc657eE4";
-
-// Create a new contract instance
-// const contract = new web3.eth.Contract(contractABI, contractAddress);
-const contract = new web3.eth.Contract(contractABI, contractAddress);
-owner='0xf4ecdAfc258507E840D741772ce8Ef9db2235962';
-
-const allowlistedAddresses = new Set(['0xf4ecdAfc258507E840D741772ce8Ef9db2235962', '0x05C7426804A63fCB4aD4019F0EDFBc2666b297d1']);
-
-// Private key for signing messages, this should be kept secret
-const privateKey = '0xf98bc0cbb65a19d41f0ca3b5937bb08624b17a69e31b162689b924ed2970bc12';
-
-const signer = new ethers.Wallet(privateKey);
+const csv = require('csv-parser');
 
 
 
@@ -227,9 +190,8 @@ app.post('/signature', async (req, res) => {
       // Call the recoverSigner function on the smart contract
       const signerAddress = await contract.methods.recoverSigner(messageHash, signature).call();
       // Check if the signerAddress is the same as the address passed as an argument
-      
       console.log(signerAddress)
-      if(signerAddress ===owner ) {
+      if(signerAddress === address) {
           console.log("Signature is valid");
       } else {
           console.log("Signature is invalid");
@@ -238,7 +200,7 @@ app.post('/signature', async (req, res) => {
   
     checkSignature(signedData.walletAddress,signedData.signature);
   });
-app.post('/allowlist', async (req, res) => {
+  app.post('/allowlist', async (req, res) => {
     const { addresses } = req.body;
     
     
@@ -248,41 +210,6 @@ app.post('/allowlist', async (req, res) => {
     }
     
     res.send({ message: 'Allowlisted addresses added successfully' });
-});
-
-
-
-app.post("/airdrop", (req, res) => {
-    const addresses = req.body.addresses;
-    const account = "0xf4ecdAfc258507E840D741772ce8Ef9db2235962"; // Address of account that will send the transaction
-    const privateKey = "0xf98bc0cbb65a19d41f0ca3b5937bb08624b17a69e31b162689b924ed2970bc12"; // Private key of account that will send the transaction
-    let gasPrice;
-    let gasLimit;
-
-    request('https://ethgasstation.info/json/ethgasAPI.json', function (error, response, body) {
-        const data = JSON.parse(body);
-        gasPrice = web3.utils.toWei(data.fast.toString(), "gwei");
-        gasLimit = data.fastest * 100000;
-  
-        const contractData = contract.methods.airdropNFTs(addresses).encodeABI();
-        console.log(contractData) // check the value of contractData here
-
-        web3.eth.getTransactionCount(account).then((nonce) => {
-            const tx = {
-                nonce: nonce,
-                gasPrice: gasPrice,
-                gasLimit: gasLimit,
-                data: contractData,
-                to: contractAddress,
-                from: account
-            };
-            const signedTx = web3.eth.accounts.signTransaction(tx, privateKey);
-            web3.eth.sendSignedTransaction(signedTx.rawTransaction)
-                .on("transactionHash", (hash) => {
-                    res.send({ message: "Airdrop transaction sent", hash: hash });
-                });
-        });
-    });
 });
 
 app.get('/', (req, res) => {
