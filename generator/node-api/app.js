@@ -7,7 +7,9 @@ const cors = require('cors');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require("keccak256");
 const bodyparser = require("body-parser");
-const csv = require('csv-parser');
+
+const parse = require('csv-parse/lib/sync');
+const fs = require('fs');
 
 
 
@@ -151,6 +153,7 @@ app.get('/getMerkleRoot', async (req, res) => {
 });
 
 
+let allowlistedAddresses = new Set(); // set to store allowlisted addresses
 
 
 app.post('/signature', async (req, res) => {
@@ -201,16 +204,34 @@ app.post('/signature', async (req, res) => {
     checkSignature(signedData.walletAddress,signedData.signature);
   });
   app.post('/allowlist', async (req, res) => {
-    const { addresses } = req.body;
-    
-    
+    const file = req.body.file; // assume the CSV file is sent in the request body with key "file"
+
+    // Read the file and parse the CSV data
+    const csvData = await fs.promises.readFile(file, 'utf8');
+    const records = parse(csvData, {columns: true, skip_empty_lines: true});
     // Add addresses to allowlistedAddresses set
-    for (let i = 0; i < addresses.length; i++) {
-        allowlistedAddresses.add(addresses[i]);
-    }
-    
+    records.forEach((record) => {
+        allowlistedAddresses.add(record.address); // assuming "address" is the header of the column containing addresses in the CSV file
+    });
     res.send({ message: 'Allowlisted addresses added successfully' });
 });
+
+
+let airdropAddresses = new Set(); // set to store airdrop addresses
+
+app.post('/airdroplist', async (req, res) => {
+    const file = req.body.file; // assume the CSV file is sent in the request body with key "file"
+
+    // Read the file and parse the CSV data
+    const csvData = await fs.promises.readFile(file, 'utf8');
+    const records = parse(csvData, {columns: true, skip_empty_lines: true});
+    // Add addresses to airdropAddresses set
+    records.forEach((record) => {
+        airdropAddresses.add(record.address); // assuming "address" is the header of the column containing addresses in the CSV file
+    });
+    res.send({ message: 'Airdrop addresses added successfully' });
+});
+
 
 app.get('/', (req, res) => {
     res.status(200).send({ success: true, msg: "API is working" });
