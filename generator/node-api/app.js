@@ -155,19 +155,21 @@ app.get('/getMerkleRoot', async (req, res) => {
 
 let allowlistedAddresses = new Set(); // set to store allowlisted addresses
 
-
-app.post('/signature', async (req, res) => {
+const owner='0xf4ecdAfc258507E840D741772ce8Ef9db2235962';
+app.post('/v1/:organization_id/brand/:brand_id/project/:project_id/contract/:contract_id/whitelist/', async (req, res) => {
+    const {organization_id, brand_id, project_id, contract_id} = req.params;
     const {walletAddress} = req.body;
-  
-    // Check if address is allowlisted
-    if (!allowlistedAddresses.has(walletAddress)) {
-      return res.status(400).send({error: 'Address not allowlisted'});
+
+    // Make a request to the endpoint to check if address is whitelisted
+    const whitelistResponse = await axios.get(`https://api.staging.data.zero-code.io/v1/${organization_id}/brand/${brand_id}/project/${project_id}/contract/${contract_id}/whitelist/${walletAddress}`);
+    // Check if address is whitelisted
+    if (!whitelistResponse.data.whitelisted) {
+        return res.status(400).send({error: 'Address not whitelisted'});
     }
-  
+
     // Sign message with private key
     let messageHash = ethers.utils.id(walletAddress);
     let messageBytes = ethers.utils.arrayify(messageHash);
-  
     let signature;
     try {
       signature = await signer.signMessage(messageBytes);
@@ -179,12 +181,8 @@ app.post('/signature', async (req, res) => {
       walletAddress: walletAddress,
       signature: signature
     };
-    
-    // export the object
-    // module.exports = signedData;
-  
     res.send(signedData);
-  
+
     // check signature
     const checkSignature = async (address, signature) => {
       // Compute the message digest
@@ -200,22 +198,34 @@ app.post('/signature', async (req, res) => {
           console.log("Signature is invalid");
       }
     }
-  
     checkSignature(signedData.walletAddress,signedData.signature);
   });
-  app.post('/allowlist', async (req, res) => {
-    const file = req.body.file; // assume the CSV file is sent in the request body with key "file"
 
+  app.post('/v1/:organization_id/brand/:brand_id/project/:project_id/contract/:contract_id/whitelist', async (req, res) => {
+    const { organization_id, brand_id, project_id, contract_id } = req.params;
+    const file = req.body.file; // assume the CSV file is sent in the request body with key "file"
+    
+    // check if organization_id, brand_id, project_id, contract_id exist
+    // if not, return error message
+    if (!organization_id || !brand_id || !project_id || !contract_id) {
+    return res.status(400).send({ error: 'Missing organization_id, brand_id, project_id, or contract_id' });
+    }
+    
     // Read the file and parse the CSV data
     const csvData = await fs.promises.readFile(file, 'utf8');
     const records = parse(csvData, {columns: true, skip_empty_lines: true});
+    
     // Add addresses to allowlistedAddresses set
     records.forEach((record) => {
-        allowlistedAddresses.add(record.address); // assuming "address" is the header of the column containing addresses in the CSV file
+    allowlistedAddresses.add(record.address); // assuming "address" is the header of the column containing addresses in the CSV file
     });
     res.send({ message: 'Allowlisted addresses added successfully' });
-});
-
+    });
+    
+    
+    
+    
+    
 
 let airdropAddresses = new Set(); // set to store airdrop addresses
 
