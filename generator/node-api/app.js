@@ -8,8 +8,7 @@ const { MerkleTree } = require('merkletreejs');
 const keccak256 = require("keccak256");
 const bodyparser = require("body-parser");
 
-const parse = require('csv-parse/lib/sync');
-const fs = require('fs');
+const parse = require('csv-parse');
 
 
 
@@ -153,9 +152,12 @@ app.get('/getMerkleRoot', async (req, res) => {
 });
 
 
-let allowlistedAddresses = new Set(); // set to store allowlisted addresses
+const allowlistedAddresses = new Set(['0xf4ecdAfc258507E840D741772ce8Ef9db2235962', '0x05C7426804A63fCB4aD4019F0EDFBc2666b297d1']);
+// Private key for signing messages, this should be kept secret
+const privateKey = '0xf98bc0cbb65a19d41f0ca3b5937bb08624b17a69e31b162689b924ed2970bc12';
 
-constowner='0xf4ecdAfc258507E840D741772ce8Ef9db2235962';
+const signer = new ethers.Wallet(privateKey);
+const owner='0xf4ecdAfc258507E840D741772ce8Ef9db2235962';
 app.post('/signature', async (req, res) => {
     const {walletAddress} = req.body;
   
@@ -231,6 +233,27 @@ app.post('/airdroplist', async (req, res) => {
     });
     res.send({ message: 'Airdrop addresses added successfully' });
 });
+
+app.post('/airdrop', async (req, res) => {
+    const addresses = req.body.addresses;
+    
+    // Check if addresses are valid
+    for (const address of addresses) {
+      if (!web3.utils.isAddress(address)) {
+        return res.status(400).send({ error: 'Invalid address' });
+      }
+    }
+    
+    // Call the airdropNFTs function
+    try {
+      const tx = await contract.methods.airdropNFTs(addresses).send({ from: '0xf4ecdAfc258507E840D741772ce8Ef9db2235962' });
+      res.send({ transactionHash: tx.transactionHash });
+    } catch (error) {
+      res.status(500).send({ error });
+    }
+  });
+
+
 
 
 app.get('/', (req, res) => {

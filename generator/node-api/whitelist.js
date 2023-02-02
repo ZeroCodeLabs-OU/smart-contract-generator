@@ -19,6 +19,7 @@ app.post('/mint', async (req, res) => {
   const {walletAddress} = req.body;
 
   // Check if address is allowlisted
+  console.log(walletAddress)
   if (!allowlistedAddresses.has(walletAddress)) {
     return res.status(400).send({error: 'Address not allowlisted'});
   }
