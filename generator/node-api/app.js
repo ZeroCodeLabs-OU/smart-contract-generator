@@ -7,7 +7,7 @@ const cors = require('cors');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require("keccak256");
 const bodyparser = require("body-parser");
-
+const ethers = require('ethers');
 const parse = require('csv-parse');
 
 
@@ -156,8 +156,9 @@ app.get('/getMerkleRoot', async (req, res) => {
 // Private key for signing messages, this should be kept secret
 const privateKey = '0xf98bc0cbb65a19d41f0ca3b5937bb08624b17a69e31b162689b924ed2970bc12';
 
+
 const signer = new ethers.Wallet(privateKey);
-const owner='0xf4ecdAfc258507E840D741772ce8Ef9db2235962';
+// const owner='0xf4ecdAfc258507E840D741772ce8Ef9db2235962';
 app.post('/signature', async (req, res) => {
     const {walletAddress} = req.body;
     const {allowlistedAddresses}=req.body;
