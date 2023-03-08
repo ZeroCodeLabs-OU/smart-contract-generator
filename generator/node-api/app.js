@@ -159,11 +159,11 @@ const privateKey = '0xf98bc0cbb65a19d41f0ca3b5937bb08624b17a69e31b162689b924ed29
 
 const signer = new ethers.Wallet(privateKey);
 // const owner='0xf4ecdAfc258507E840D741772ce8Ef9db2235962';
-app.post('/signature', async (req, res) => {
+app.get('/signature', async (req, res) => {
     const {walletAddress} = req.body;
     const {allowlistedAddresses}=req.body;
     // Check if address is allowlisted
-    if (!allowlistedAddresses.has(walletAddress)) {
+    if (!allowlistedAddresses.includes(walletAddress)) {
       return res.status(400).send({error: 'Address not allowlisted'});
     }
   
@@ -236,7 +236,7 @@ app.post('/airdroplist', async (req, res) => {
 });
 
 app.post('/airdrop', async (req, res) => {
-    const addresses = req.body.addresses;
+    const {addresses,senderAddress} = req.body;
     
     // Check if addresses are valid
     for (const address of addresses) {
@@ -247,7 +247,7 @@ app.post('/airdrop', async (req, res) => {
     
     // Call the airdropNFTs function
     try {
-      const tx = await contract.methods.airdropNFTs(addresses).send({ from: '0xf4ecdAfc258507E840D741772ce8Ef9db2235962' });
+      const tx = await contract.methods.airdropNFTs(addresses).send({ from: senderAddress });
       res.send({ transactionHash: tx.transactionHash });
     } catch (error) {
       res.status(500).send({ error });

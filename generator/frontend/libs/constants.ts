@@ -1033,7 +1033,7 @@ export const ERC721ABI:any = [
       }
     ],
     "name": "isWhitelisted",
-    "outputs": [
+    "outputs": [ 
       {
         "internalType": "bool",
         "name": "",

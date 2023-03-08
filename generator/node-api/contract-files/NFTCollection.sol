@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+
 import "./ERC721A.sol";
 import "./Address.sol";
 import "./Strings.sol";
 import "./AccessControl.sol";
 import "./Initializable.sol";
+import "./MerkleProof.sol";
 
 import "./ECDSA.sol";
 import "./ERC2981.sol";
@@ -13,16 +15,12 @@ import "./Base64.sol";
 import "./Counters.sol";
 
 
-
-contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
+contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
     using Address for address payable;
     using Strings for uint256;
-    mapping(bytes => bool) public signatureUsed;
-    mapping(address => uint256) public whitelistTiers;
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIds;
-    
     /// Fixed at deployment time
     struct DeploymentConfig {
         // Name of the NFT contract.
@@ -70,9 +68,9 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         // Pre-reveal token URI for placholder metadata. This will be returned for all token IDs until a `baseURI`
         // has been set.
         string prerevealTokenURI;
-        // Root of the Merkle tree of whitelisted addresses. This is used to check if a wallet has been     listed
+        // Root of the Merkle tree of whitelisted addresses. This is used to check if a wallet has been whitelisted
         // for presale minting.
-        // bytes32 presaleMerkleRoot;
+        bytes32 presaleMerkleRoot;
         // Secondary market royalties in basis points (100 bps = 1%)
         uint256 royaltiesBps;
         // Address for royalties
@@ -124,6 +122,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         require(!_preventInitialization, "Cannot be initialized");
         _validateDeploymentConfig(deploymentConfig);
 
+        _grantRole(ADMIN_ROLE, msg.sender);
         _transferOwnership(deploymentConfig.owner);
 
         _deploymentConfig = deploymentConfig;
@@ -132,6 +131,8 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         reserveRemaining = deploymentConfig.reservedSupply;
         _preventInitialization = true;
     }
+
+    
 
     /****************
      * User actions *
@@ -146,27 +147,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         require(mintingActive(), "Minting has not started yet");
 
         _mintTokens(msg.sender, amount);
-        _deploymentConfig.treasuryAddress.sendValue(msg.value);
-    }
-
-   //digital signature function
-    function recoverSigner(bytes32 hash, bytes memory signature) public pure returns (address) {
-        bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
-        return ECDSA.recover(messageDigest, signature);
-    }
-
-    /// Mint tokens if the wallet has been whitelisted
-    function presaleMint(uint256 amount,bytes32 hash, bytes memory signature)
-        external
-        payable
-        paymentProvided(amount * _runtimeConfig.presaleMintPrice)
-    {
-        require(presaleActive(), "Presale has not started yet");
-        require(recoverSigner(hash, signature) == owner(), "Address is not allowlisted");
-        require(!signatureUsed[signature], "Signature has already been used.");
-
-        _presaleMinted[msg.sender] = true;
-        _mintTokens(msg.sender, amount);
     }
 
     function airdropNFTs(address[] calldata wAddress)public onlyOwner{
@@ -179,6 +159,23 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         _safeMint(wAddress, newTokenID);
         _tokenIds.increment();
     }
+
+    /// Mint tokens if the wallet has been whitelisted
+    function presaleMint(uint256 amount, bytes32[] calldata proof)
+        external
+        payable
+        paymentProvided(amount * _runtimeConfig.presaleMintPrice)
+    {
+        require(presaleActive(), "Presale has not started yet");
+        require(
+            isWhitelisted(msg.sender, proof),
+            "Not whitelisted for presale"
+        );
+
+        _presaleMinted[msg.sender] = true;
+        _mintTokens(msg.sender, amount);
+    }
+
     /******************
      * View functions *
      ******************/
@@ -204,12 +201,25 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         return _deploymentConfig.maxSupply - totalSupply() - reserveRemaining;
     }
 
-   
+    /// Check if the wallet is whitelisted for the presale
+    function isWhitelisted(address wallet, bytes32[] calldata proof)
+        public
+        view
+        returns (bool)
+    {
+        require(!_presaleMinted[wallet], "Already minted");
+
+        bytes32 leaf = keccak256(abi.encodePacked(wallet));
+
+        return MerkleProof.verify(proof, _runtimeConfig.presaleMerkleRoot, leaf);
+    }
+
     /// Contract owner address
     /// @dev Required for easy integration with OpenSea
     function owner() public view returns (address) {
         return _deploymentConfig.owner;
     }
+    
     modifier onlyOwner() {
         _checkOwner();
         _;
@@ -273,13 +283,11 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         _runtimeConfig = newConfig;
     }
 
-
-
     /// Withdraw minting fees to the treasury address
     /// @dev Callable by admin roles only
-    // function withdrawFees() external onlyRole(ADMIN_ROLE) {
-    //     _deploymentConfig.treasuryAddress.sendValue(address(this).balance);
-    // }
+    function withdrawFees() external onlyRole(ADMIN_ROLE) {
+        _deploymentConfig.treasuryAddress.sendValue(address(this).balance);
+    }
 
     /*************
      * Internals *
@@ -392,12 +400,6 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         );
     }
 
-    // Checks if metadata has already been revealed and changes baseURI if it wasn't
-    function reveal(string memory _baseURI) public onlyRole(ADMIN_ROLE) {
-        require(bytes(_runtimeConfig.baseURI).length ==0, "Metadata already revealed");
-        _runtimeConfig.baseURI = _baseURI;
-    }
-
     /// Internal function without any checks for performing the ownership transfer
     function _transferOwnership(address newOwner) internal {
         address previousOwner = _deploymentConfig.owner;
@@ -436,7 +438,7 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         return
             bytes(_runtimeConfig.baseURI).length > 0
                 ? string(
-                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString(), ".json")
+                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString())
                 )
                 : _runtimeConfig.prerevealTokenURI;
     }
@@ -534,8 +536,9 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable{
         return _runtimeConfig.presaleMintStart;
     }
 
-   
-
+    function presaleMerkleRoot() public view returns (bytes32) {
+        return _runtimeConfig.presaleMerkleRoot;
+    }
 
     function baseURI() public view returns (string memory) {
         return _runtimeConfig.baseURI;

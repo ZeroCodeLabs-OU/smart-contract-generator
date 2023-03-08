@@ -1,5 +1,5 @@
 Arguments: 
-  C:\Program Files\nodejs\node.exe C:\npm-global\node_modules\yarn\bin\yarn.js add csv-parse
+  C:\Program Files\nodejs\node.exe C:\npm-global\node_modules\yarn\bin\yarn.js start
 
 PATH: 
   C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\nodejs\;C:\Users\Jay\AppData\Local\Microsoft\WindowsApps;C:\Users\Jay\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Jay\AppData\Roaming\npm;C:\npm-global;
@@ -34,6 +34,7 @@ npm manifest:
     "author": "",
     "license": "ISC",
     "dependencies": {
+      "csv-parse": "^5.3.3",
       "eth-sig-util": "^3.0.1",
       "ethereumjs-tx": "^2.1.2",
       "ethers": "^5.7.2",
