@@ -19,8 +19,9 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
     using Address for address payable;
     using Strings for uint256;
     using Counters for Counters.Counter;
+    mapping(bytes => bool) public signatureUsed;
+    address public WhitelistSigner;
 
-    Counters.Counter private _tokenIds;
     /// Fixed at deployment time
     struct DeploymentConfig {
         // Name of the NFT contract.
@@ -75,8 +76,10 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
         uint256 royaltiesBps;
         // Address for royalties
         address royaltiesAddress;
+        
+        
     }
-
+    
     struct ContractInfo {
         uint256 version;
         DeploymentConfig deploymentConfig;
@@ -139,6 +142,10 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
      ****************/
 
     /// Mint tokens
+    function recoverSigner(bytes32 hash, bytes memory signature) public pure returns (address) {
+        bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        return ECDSA.recover(messageDigest, signature);
+    }
     function mint(uint256 amount)
         external
         payable
@@ -148,29 +155,28 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
 
         _mintTokens(msg.sender, amount);
     }
-
-    function airdropNFTs(address[] calldata wAddress)public onlyOwner{
-        for(uint i=0;i<wAddress.length;i++){
-            _mintSingleNFT(wAddress[i]);
+    
+    function airdropNFTs(address[]  memory _wAddress,uint256 _amount)onlyOwner public payable{
+        for(uint i=0;i<_wAddress.length;i++){
+            _mintTokens(_wAddress[i],_amount);
         }
     }
-    function _mintSingleNFT(address wAddress)private{
-        uint newTokenID=_tokenIds.current();
-        _safeMint(wAddress, newTokenID);
-        _tokenIds.increment();
+   function setWhitelistSigner(address _newAddress) public onlyOwner {
+        WhitelistSigner = _newAddress;
     }
 
+    function getWhitelistSigner() public view returns (address) {
+        return WhitelistSigner;
+    }
     /// Mint tokens if the wallet has been whitelisted
-    function presaleMint(uint256 amount, bytes32[] calldata proof)
+    function presaleMint(uint256 amount,bytes32 hash, bytes memory signature)
         external
         payable
         paymentProvided(amount * _runtimeConfig.presaleMintPrice)
     {
         require(presaleActive(), "Presale has not started yet");
-        require(
-            isWhitelisted(msg.sender, proof),
-            "Not whitelisted for presale"
-        );
+        require(recoverSigner(hash, signature) == getWhitelistSigner(), "Address is not allowlisted");
+        require(!signatureUsed[signature], "Signature has already been used.");
 
         _presaleMinted[msg.sender] = true;
         _mintTokens(msg.sender, amount);
@@ -219,6 +225,8 @@ contract NFTCollection is ERC721A, ERC2981, AccessControl, Initializable {
     function owner() public view returns (address) {
         return _deploymentConfig.owner;
     }
+
+    
     
     modifier onlyOwner() {
         _checkOwner();

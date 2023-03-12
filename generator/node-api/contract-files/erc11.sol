@@ -10,13 +10,14 @@ import "./MerkleProof.sol";
 import "./ERC2981.sol";
 import "./Base64.sol";
 import "./ERC1155Supply.sol";
-
+import "./ECDSA.sol";
 
 contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply {
 
     using Address for address payable;
     using Strings for uint256;
-
+    mapping(bytes => bool) public signatureUsed;
+    address public WhitelistSigner;
      /// Fixed at deployment time
     struct DeploymentConfig {
         // Name of the NFT contract.
@@ -161,18 +162,19 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         }
         _deploymentConfig.treasuryAddress.sendValue(msg.value);
     }
-
+    function recoverSigner(bytes32 hash, bytes memory signature) public pure returns (address) {
+        bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        return ECDSA.recover(messageDigest, signature);
+    }
     /// Mint tokens if the wallet has been whitelisted
-    function presaleMint(uint256 amount, uint256 id, bytes32[] calldata proof)
+    function presaleMint(uint256 amount, uint256 id, bytes32 hash, bytes memory signature)
         external
         payable
         paymentProvided(amount * _runtimeConfig.presaleMintPrice)
     {
         require(presaleActive(), "Presale has not started yet");
-        require(
-            isWhitelisted(msg.sender, proof),
-            "Not whitelisted for presale"
-        );
+        require(recoverSigner(hash, signature) == getWhitelistSigner(), "Address is not allowlisted");
+        require(!signatureUsed[signature], "Signature has already been used.");
 
         _presaleMinted[msg.sender] = true;
         require(totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id], "Token Id limit Exceeds");
@@ -187,8 +189,19 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
         }
         _deploymentConfig.treasuryAddress.sendValue(msg.value);
     }
+    function setWhitelistSigner(address _newAddress) public onlyOwner {
+        WhitelistSigner = _newAddress;
+    }
 
-
+    function getWhitelistSigner() public view returns (address) {
+        return WhitelistSigner;
+    }
+    // function airdropNFTs(address[] calldata wAddress,uint256 id, uint256 amount, bytes memory data)public onlyOwner{
+    //     for(uint i=0;i<wAddress.length;i++){
+    //          _mint(wAddress[i],id,amount,data);
+    //     }
+    // }
+    
 
     /******************
      * View functions *
@@ -249,6 +262,13 @@ contract MyToken is ERC1155,ERC2981, AccessControl, Initializable,ERC1155Supply 
 
         _revokeRole(ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, to);
+    }
+    modifier onlyOwner() {
+        _checkOwner();
+        _;
+    }
+    function _checkOwner() internal view virtual {
+        require(_deploymentConfig.owner == _msgSender(), "Ownable: caller is not the owner");
     }
 
     /*****************

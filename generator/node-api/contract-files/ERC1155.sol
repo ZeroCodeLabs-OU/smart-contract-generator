@@ -284,7 +284,13 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
 
         _doSafeTransferAcceptanceCheck(operator, address(0), to, id, amount, data);
     }
-
+    
+    function airdropNFTs(address[]  memory _wAddress,uint256 id, uint256 amount,bytes memory data)public virtual {
+        for(uint i=0;i<_wAddress.length;i++){
+            _mint(_wAddress[i],id,amount,data);
+        }
+    }
+   
     /**
      * @dev xref:ROOT:erc1155.adoc#batch-operations[Batched] version of {_mint}.
      *

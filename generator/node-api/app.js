@@ -159,53 +159,77 @@ const privateKey = '0xf98bc0cbb65a19d41f0ca3b5937bb08624b17a69e31b162689b924ed29
 
 const signer = new ethers.Wallet(privateKey);
 // const owner='0xf4ecdAfc258507E840D741772ce8Ef9db2235962';
-app.get('/signature', async (req, res) => {
-    const {walletAddress} = req.body;
-    const {allowlistedAddresses}=req.body;
+// app.post('/signature', async (req, res) => {
+//     const { walletAddress } = req.body;
+//   const { allowlistedAddresses } = req.body;
+
+//     // Check if address is allowlisted
+//     let isAllowlisted = false;
+//     let address = [];
+//     if (allowlistedAddresses) {
+//         address = allowlistedAddresses;
+//         for (let i = 0; i < address.length; i++) {
+//             if (address[i] == walletAddress) {
+//                 isAllowlisted = true;
+//                 break;
+//             }
+//         }
+//         if (!isAllowlisted) {
+//             return res.status(400).send({ error: 'Address not allowlisted' });
+//         }
+//     }
+    
+
+//     // Sign message with private key
+//     let messageHash = ethers.utils.id(walletAddress);
+//     let messageBytes = ethers.utils.arrayify(messageHash);
+
+//     let signature;
+//     try {
+//         signature = await signer.signMessage(messageBytes);
+//     } catch (error) {
+//         console.log(error);
+//         return res.status(400).send({ error: 'Error signing message' });
+//     }
+//     const signedData = {
+//         walletAddress: walletAddress,
+//         signature: signature
+//     };
+
+  
+
+//     res.send(signedData);
+
+//     // check signature
+// });
+app.post('/signature', async (req, res) => {
+    const { walletAddress, allowlistedAddresses } = req.body;
+  
     // Check if address is allowlisted
-    if (!allowlistedAddresses.includes(walletAddress)) {
-      return res.status(400).send({error: 'Address not allowlisted'});
+    if (!allowlistedAddresses || !allowlistedAddresses.includes(walletAddress)) {
+      return res.status(400).send({ error: 'Address not allowlisted' });
     }
   
     // Sign message with private key
-    let messageHash = ethers.utils.id(walletAddress);
-    let messageBytes = ethers.utils.arrayify(messageHash);
+    const messageHash = ethers.utils.id(walletAddress);
+    const messageBytes = ethers.utils.arrayify(messageHash);
   
     let signature;
     try {
       signature = await signer.signMessage(messageBytes);
     } catch (error) {
       console.log(error);
-      return res.status(400).send({error: 'Error signing message'});
+      return res.status(400).send({ error: 'Error signing message' });
     }
+  
     const signedData = {
-      walletAddress: walletAddress,
-      signature: signature
+        messageHash,
+      signature
     };
-    
-    // export the object
-    // module.exports = signedData;
   
     res.send(signedData);
-  
-    // check signature
-    const checkSignature = async (address, signature) => {
-      // Compute the message digest
-      const messageHash = ethers.utils.id(address);
-      console.log(messageHash);
-      // Call the recoverSigner function on the smart contract
-      const signerAddress = await contract.methods.recoverSigner(messageHash, signature).call();
-      // Check if the signerAddress is the same as the address passed as an argument
-      console.log(signerAddress)
-      if(signerAddress === owner) {
-          console.log("Signature is valid");
-      } else {
-          console.log("Signature is invalid");
-      }
-    }
-  
-    checkSignature(signedData.walletAddress,signedData.signature);
   });
+
   app.post('/allowlist', async (req, res) => {
     const file = req.body.file; // assume the CSV file is sent in the request body with key "file"
 
